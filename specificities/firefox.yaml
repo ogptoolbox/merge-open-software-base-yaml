@@ -1,0 +1,4 @@
+debian:
+  name: iceweasel
+mim:
+  name: firefox-esr
