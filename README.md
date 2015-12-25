@@ -8,7 +8,7 @@ Generate an open database of software (in YAML format).
 ```bash
 git clone https://git.framasoft.org/etalab/merge-open-software-base-yaml.git
 cd merge-open-software-base-yaml
-./merge_open_software_base_yaml.py -v ../mim-to-yaml/data/ specificities/ ../udd-to-yaml/yaml/ data/
+./merge_open_software_base_yaml.py -v ../mim-to-yaml/data/ specificities/ ../udd-to-yaml/yaml/ ../open-software-base-yaml/
 ```
 
 # Open Sofware Base
