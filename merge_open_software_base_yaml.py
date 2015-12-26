@@ -136,59 +136,82 @@ def main():
         if debian_specificity is None:
             continue
         debian_name = debian_specificity.get('name', name)
+
         debian_package_path = os.path.join(
             args.udd_dir,
             'packages',
             debian_name[:4] if debian_name.startswith('lib') else debian_name[0],
             '{}.yaml'.format(debian_name)
             )
-        if not os.path.exists(debian_package_path):
-            continue
-        with open(debian_package_path) as debian_package:
-            debian_package = yaml.load(debian_package)
+        if os.path.exists(debian_package_path):
+            with open(debian_package_path) as debian_package_file:
+                debian_package = yaml.load(debian_package_file)
+        else:
+            debian_package = None
 
-        debian = collections.OrderedDict()
-        if debian_name != name:
-            debian['name'] = debian_name
+        debian_source_path = os.path.join(
+            args.udd_dir,
+            'sources',
+            debian_name[:4] if debian_name.startswith('lib') else debian_name[0],
+            '{}.yaml'.format(debian_name)
+            )
+        if os.path.exists(debian_source_path):
+            with open(debian_source_path) as debian_source_file:
+                debian_source = yaml.load(debian_source_file)
+        else:
+            debian_source = None
 
-        descriptions_by_architecture = {}
-        release_by_name = debian_package.get('releases', {})
-        release = release_by_name.get(debian_stable_release_name)
-        releases = release_by_name.values() if release is None else [release]
-        for release in releases:
-            for component in release.values():
-                versions = component.get('versions')
-                if versions is None:
-                    continue
-                latest_version_str = None
-                for version_str in versions:
-                    if latest_version_str is None or apt_pkg.version_compare(latest_version_str, version_str) < 0:
-                        latest_version_str = version_str
-                version = versions[latest_version_str]
-                for architecture, package in version.get('architectures', {}).items():
-                    description_md5 = package['description_md5']
-                    descriptions = component.get('descriptions', {}).get(description_md5)
-                    if descriptions is not None:
-                        descriptions_by_architecture[architecture] = descriptions
-        assert descriptions_by_architecture, debian_name
-        if descriptions_by_architecture:
-            debian['description'] = descriptions_by_architecture.get('all') or \
-                descriptions_by_architecture.get('amd64') or list(descriptions_by_architecture.values())[0]
+        if debian_package is None and debian_source is None:
+            debian = None
+        else:
+            debian = collections.OrderedDict()
+            if debian_name != name:
+                debian['name'] = debian_name
 
-        screenshots = debian_package.get('screenshots')
-        screenshot = extract_latest_debian_screenshot(*screenshots) if screenshots is not None else None
-        versions = debian_package.get('versions')
-        if versions is not None:
-            for version in versions.values():
-                screenshots = version.get('screenshots')
-                if screenshots is not None:
-                    screenshot = extract_latest_debian_screenshot(screenshot, *screenshots)
-        if screenshot:
-            debian['screenshot'] = collections.OrderedDict([
-                ('large_image_url', screenshot['large_image_url']),
-                ('screenshot_url', screenshot['screenshot_url']),
-                ('small_image_url', screenshot['small_image_url']),
-                ])
+            if debian_package is not None:
+                descriptions_by_architecture = {}
+                release_by_name = debian_package.get('releases', {})
+                release = release_by_name.get(debian_stable_release_name)
+                releases = release_by_name.values() if release is None else [release]
+                for release in releases:
+                    for component in release.values():
+                        versions = component.get('versions')
+                        if versions is None:
+                            continue
+                        latest_version_str = None
+                        for version_str in versions:
+                            if latest_version_str is None or apt_pkg.version_compare(latest_version_str, version_str) < 0:
+                                latest_version_str = version_str
+                        version = versions[latest_version_str]
+                        for architecture, package in version.get('architectures', {}).items():
+                            description_md5 = package['description_md5']
+                            descriptions = component.get('descriptions', {}).get(description_md5)
+                            if descriptions is not None:
+                                descriptions_by_architecture[architecture] = descriptions
+                assert descriptions_by_architecture, debian_name
+                if descriptions_by_architecture:
+                    debian['description'] = descriptions_by_architecture.get('all') or \
+                        descriptions_by_architecture.get('amd64') or list(descriptions_by_architecture.values())[0]
+
+                screenshots = debian_package.get('screenshots')
+                screenshot = extract_latest_debian_screenshot(*screenshots) if screenshots is not None else None
+                versions = debian_package.get('versions')
+                if versions is not None:
+                    for version in versions.values():
+                        screenshots = version.get('screenshots')
+                        if screenshots is not None:
+                            screenshot = extract_latest_debian_screenshot(screenshot, *screenshots)
+                if screenshot:
+                    debian['screenshot'] = collections.OrderedDict([
+                        ('large_image_url', screenshot['large_image_url']),
+                        ('screenshot_url', screenshot['screenshot_url']),
+                        ('small_image_url', screenshot['small_image_url']),
+                        ])
+
+            if debian_source is not None:
+                security_issues = debian_source.get('security_issues')
+                if security_issues:
+                    debian['security_issues'] = security_issues
 
         data = collections.OrderedDict([
             ('name', name),
