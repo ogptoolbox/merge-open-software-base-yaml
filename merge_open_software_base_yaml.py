@@ -147,9 +147,9 @@ def main():
         with open(debian_package_path) as debian_package:
             debian_package = yaml.load(debian_package)
 
-        debian_data = collections.OrderedDict()
+        debian = collections.OrderedDict()
         if debian_name != name:
-            debian_data['name'] = debian_name
+            debian['name'] = debian_name
 
         descriptions_by_architecture = {}
         release_by_name = debian_package.get('releases', {})
@@ -172,7 +172,7 @@ def main():
                         descriptions_by_architecture[architecture] = descriptions
         assert descriptions_by_architecture, debian_name
         if descriptions_by_architecture:
-            debian_data['description'] = descriptions_by_architecture.get('all') or \
+            debian['description'] = descriptions_by_architecture.get('all') or \
                 descriptions_by_architecture.get('amd64') or list(descriptions_by_architecture.values())[0]
 
         screenshots = debian_package.get('screenshots')
@@ -184,7 +184,7 @@ def main():
                 if screenshots is not None:
                     screenshot = extract_latest_debian_screenshot(screenshot, *screenshots)
         if screenshot:
-            debian_data['screenshot'] = collections.OrderedDict([
+            debian['screenshot'] = collections.OrderedDict([
                 ('large_image_url', screenshot['large_image_url']),
                 ('screenshot_url', screenshot['screenshot_url']),
                 ('small_image_url', screenshot['small_image_url']),
@@ -193,8 +193,8 @@ def main():
         data = collections.OrderedDict([
             ('name', name),
             ])
-        if debian_data:
-            data['debian'] = debian_data
+        if debian:
+            data['debian'] = debian
 
         with open(os.path.join(args.target_dir, '{}.yaml'.format(name)), 'w') as yaml_file:
             yaml.dump(data, yaml_file, allow_unicode = True, default_flow_style = False, indent = 2, width = 120)
