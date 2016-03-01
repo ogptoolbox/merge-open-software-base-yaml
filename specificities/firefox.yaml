@@ -1,4 +1,6 @@
 debian:
   name: iceweasel
+appstream_debian:
+  name: iceweasel
 mim:
   name: firefox-esr
