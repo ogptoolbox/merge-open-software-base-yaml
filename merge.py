@@ -130,7 +130,9 @@ def merge_source(dest_dir, source_dir, source_name, read_source_data = None):
         specificity_path = os.path.join(args.specificities_dir, '{}.yaml'.format(name))
         if os.path.exists(specificity_path):
             with open(specificity_path) as specificity_file:
-                name = yaml.load(specificity_file).get(source_name, {'name': name}).get('name')
+                alt_name = yaml.load(specificity_file).get(source_name, {'name': name}).get('name')
+                print('Using ' + alt_name + ' instead of ' + name + ' in source ' + source_name)
+                name = alt_name
 
         source_data = read_source_data(name)
 
@@ -151,8 +153,8 @@ def main():
         help = 'path of source directory containing YAML files extracted from MIMx')
     parser.add_argument('--udd-dir', dest = 'udd_dir',
         help = 'path of source directory containing YAML files extracted from Universal Debian Database (UDD)')
-    parser.add_argument('--appstream-debian-dir', dest = 'appstream_debian_dir',
-        help = 'path of source directory containing YAML files extrated from Appstream Debian')
+    parser.add_argument('--debian-appstream-dir', dest = 'debian_appstream_dir',
+        help = 'path of source directory containing YAML files extrated from Debian Appstream')
     parser.add_argument('target_dir', help = 'path of target directory for generated YAML files')
     parser.add_argument('-c', '--create', action = 'store_true', default = False, help = 'create empty files in destination (you must then merge)')
     parser.add_argument('-v', '--verbose', action = 'store_true', default = False, help = 'increase output verbosity')
@@ -179,11 +181,11 @@ def main():
             merge_source(args.target_dir, args.udd_dir, 'debian', read_source_data_debian)
 
 
-    elif args.appstream_debian_dir is not None:
+    elif args.debian_appstream_dir is not None:
         if args.create:
-            create_dest(args.target_dir, args.appstream_debian_dir, 'debian_appstream')
+            create_dest(args.target_dir, args.debian_appstream_dir, 'debian_appstream')
         else:
-            merge_source(args.target_dir, args.appstream_debian_dir, 'debian_appstream')
+            merge_source(args.target_dir, args.debian_appstream_dir, 'debian_appstream')
 
     else:
         print('No sources selected: use --help to get more information.')
