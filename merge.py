@@ -112,7 +112,7 @@ def create_dest(dest_dir, source_dir, source_name):
                 print(name + ' not found in dest. Creating file.')
 
 
-def merge_source(dest_dir, source_dir, source_name, read_source_data = None):
+def merge_source(dest_dir, source_dir, source_name, source_url, read_source_data = None):
     if read_source_data is None:
         def read_source_data(name):
             source_path = os.path.join(source_dir, '{}.yaml'.format(name))
@@ -138,6 +138,7 @@ def merge_source(dest_dir, source_dir, source_name, read_source_data = None):
 
         # find source file
         if source_data is not None:
+            source_data['_url'] = source_url
             data[source_name] = source_data
             with open(data_path, 'w') as yaml_file:
                 yaml.dump(data, yaml_file, allow_unicode = True, default_flow_style = False, indent = 2, width = 120)
@@ -178,14 +179,14 @@ def main():
             print('Creating from Debian UDD not implemented.')
             return 0
         else:
-            merge_source(args.target_dir, args.udd_dir, 'debian', read_source_data_debian)
+            merge_source(args.target_dir, args.udd_dir, 'debian', 'https://wiki.debian.org/UltimateDebianDatabase', read_source_data_debian)
 
 
     elif args.debian_appstream_dir is not None:
         if args.create:
             create_dest(args.target_dir, args.debian_appstream_dir, 'debian_appstream')
         else:
-            merge_source(args.target_dir, args.debian_appstream_dir, 'debian_appstream')
+            merge_source(args.target_dir, args.debian_appstream_dir, 'debian_appstream', 'https://wiki.debian.org/AppStream')
 
     else:
         print('No sources selected: use --help to get more information.')
