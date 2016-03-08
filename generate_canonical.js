@@ -15,7 +15,7 @@ var updateFile = co.wrap(function *(fileName) {
   if (data.debian_appstream) {
     data.canonical.canonicalName = {
       value: data.debian_appstream.Name.C,
-      source: data.debian_appstream._url
+      source: 'debian_appstream'
     };
   }
   if (data.debian) {
@@ -25,7 +25,7 @@ var updateFile = co.wrap(function *(fileName) {
       Object.keys(data.debian.description).forEach(locale => {
         description[locale] = {
           value: data.debian.description[locale].long_description,
-          source: data.debian._url
+          source: 'debian'
         };
       });
 
@@ -35,7 +35,7 @@ var updateFile = co.wrap(function *(fileName) {
     if (data.debian.screenshot) {
       data.canonical.screenshot = {
         value: data.debian.screenshot.large_image_url,
-        source: data.debian._url
+        source: 'debian'
       };
     }
   }
