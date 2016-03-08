@@ -1,6 +1,6 @@
 {
   "name": "etalab-merge-open-software-base-yaml",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Merge YAML files describing software products harvested from various open data sources.",
   "main": "generate_canonical.js",
   "scripts": {
