@@ -1,0 +1,13 @@
+canonicalName:
+  - debian_appstream.Name.C
+longDescription:
+  fr:
+    - debian.description.fr.long_description
+  en:
+    - debian.description.en.long_description
+  es:
+    - debian.description.es.long_description
+screenshot:
+  - debian.screenshot.large_image_url
+stackexchangeTag:
+  - wikidata.stackexchange_tag.0.value

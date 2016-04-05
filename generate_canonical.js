@@ -7,38 +7,71 @@ const path = require('path');
 const program = require('commander');
 const yaml = require('js-yaml');
 
+var get = (obj, keyString) => {
+  return keyString.split('.').reduce((o, key) => {
+    return (typeof o === 'undefined' || o === null || key === '') ? o : o[key];
+  }, obj);
+};
+
+var set = (obj, keyString, value) => {
+  return keyString.split('.').reduce((o, key, index, array) => {
+    if (index === array.length - 1) {
+      o[key] = value;
+      return o[key];
+    }
+
+    if (typeof o[key] === 'undefined' || o[key] === null) {
+      o[key] = {};
+    }
+
+    return o[key];
+  }, obj);
+};
+
+var updateFromPriorities = (destData, prioritiesList, sourceData) => {
+  // on which property path are we working
+  var propertyPath = [];
+
+  var updateKey = propertyString => {
+    var keyPriorities = get(prioritiesList, propertyString);
+    var property;
+
+    if (Array.isArray(keyPriorities)) {
+      // if the object in priorities is an array, we have a list of property
+      // to look for in the source data
+      var length = keyPriorities.length;
+      for (var i = 0; i < length; i++) {
+        var value = get(sourceData, keyPriorities[i]);
+        if (typeof value !== 'undefined') {
+          var source = keyPriorities[i].split('.')[0];
+          set(destData, propertyString, {value, source});
+          break;
+        }
+      }
+    } else {
+      // if the object in priotitiesList for this propertyPath is not an array,
+      // we have sub-properties and we apply the function recursively on it
+      Object.keys(keyPriorities).forEach(subProperty => {
+
+        propertyPath.push(subProperty);
+        updateKey(propertyPath.join('.'));
+        propertyPath.pop();
+      });
+    }
+  };
+
+  updateKey('');
+};
+
 var updateFile = co.wrap(function *(fileName) {
   var data = yaml.safeLoad(yield fs.readFile(fileName));
-
   data.canonical = {};
 
-  if (data.debian_appstream) {
-    data.canonical.canonicalName = {
-      value: data.debian_appstream.Name.C,
-      source: 'debian_appstream'
-    };
-  }
-  if (data.debian) {
-    data.canonical.longDescription = (() => {
-      var description = {};
+  var priorities = yaml.safeLoad(yield fs.readFile('./priorities/_default.yaml'));
 
-      Object.keys(data.debian.description).forEach(locale => {
-        description[locale] = {
-          value: data.debian.description[locale].long_description,
-          source: 'debian'
-        };
-      });
+  updateFromPriorities(data.canonical, priorities, data);
 
-      return description;
-    })();
-
-    if (data.debian.screenshot) {
-      data.canonical.screenshot = {
-        value: data.debian.screenshot.large_image_url,
-        source: 'debian'
-      };
-    }
-  }
+  yield fs.writeFile(fileName, data);
 
   var sortKeys = function(a, b) {
     if (a === 'name') {
@@ -99,13 +132,16 @@ co(function *() {
   var files = (yield fs.readdir(dataDir))
     .filter(filename => (minimatch(filename, '*.+(yaml|yml)')))
     .map(fileName => (path.join(dataDir, fileName)));
-  files.forEach(co.wrap(function *(fileName) {
+
+  yield files.map(co.wrap(function *(fileName) {
     try {
       yield updateFile(fileName);
     } catch (e) {
       console.log(e);
-      process.exit(1);
     }
   }));
+
   console.log('Updated ' + files.length + ' files');
-}).catch(console.log);
+}).catch(err => {
+  console.error(err);
+});
