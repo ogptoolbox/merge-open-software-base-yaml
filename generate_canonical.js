@@ -74,15 +74,19 @@ var updateFile = co.wrap(function *(fileName) {
   yield fs.writeFile(fileName, data);
 
   var sortKeys = function(a, b) {
-    if (a === 'name') {
+    if (a === '_source') {
       return -1;
     }
 
-    if (a === 'canonical') {
-      return b === 'name' ? 1 : -1;
+    if (a === 'name') {
+      return b === '_source' ? 1 : -1;
     }
 
-    if (b === 'name' || b === 'canonical') {
+    if (a === 'canonical') {
+      return b === 'name' || b === '_source' ? 1 : -1;
+    }
+
+    if (b === '_source' || b === 'name' || b === 'canonical') {
       return (sortKeys(b, a)) * -1;
     }
 
