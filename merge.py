@@ -81,6 +81,7 @@ def extract_latest_debian_screenshot(*screenshots):
             latest_screenshot = screenshot
     return latest_screenshot
 
+
 def iter_yaml_files(dir):
     assert os.path.exists(dir), "Directory doesn't exist: {}".format(dir)
     for sub_dir, dirs_name, filenames in os.walk(dir):
@@ -93,6 +94,7 @@ def iter_yaml_files(dir):
             yaml_file_path = os.path.join(sub_dir, filename)
             with open(yaml_file_path) as yaml_file:
                 yield yaml_file_path, yaml.load(yaml_file)
+
 
 def create_dest(dest_dir, source_dir, source_name):
     for source_data_path, source_data in iter_yaml_files(source_dir):
@@ -108,17 +110,21 @@ def create_dest(dest_dir, source_dir, source_name):
         if not os.path.exists(data_path):
             with open(data_path, 'w') as new_file:
                 data = {'name': name}
-                yaml.dump(data,  new_file, allow_unicode = True, default_flow_style = False, indent = 2, width = 120)
+                yaml.dump(data, new_file, allow_unicode=True, default_flow_style=False, indent=2, width=120)
                 print(name + ' not found in dest. Creating file.')
 
 
-def merge_source(dest_dir, source_dir, source_name, source_desc, read_source_data = None):
+def merge_source(dest_dir, source_dir, source_name, source_desc, read_source_data=None):
     if read_source_data is None:
         def read_source_data(name):
             source_path = os.path.join(source_dir, '{}.yaml'.format(name))
+            source_path_alt = os.path.join(source_dir, name[0], '{}.yaml'.format(name))
 
             if os.path.exists(source_path):
                 with open(source_path) as source_file:
+                    return yaml.load(source_file)
+            elif os.path.exists(source_path_alt):
+                with open(source_path_alt) as source_file:
                     return yaml.load(source_file)
             else:
                 return None
@@ -141,28 +147,30 @@ def merge_source(dest_dir, source_dir, source_name, source_desc, read_source_dat
             source_data['_source'] = source_desc
             data[source_name] = source_data
             with open(data_path, 'w') as yaml_file:
-                yaml.dump(data, yaml_file, allow_unicode = True, default_flow_style = False, indent = 2, width = 120)
+                yaml.dump(data, yaml_file, allow_unicode=True, default_flow_style=False, indent=2, width=120)
         else:
-            print(name + ' not found in source ' + source_name +  ': skipping.')
+            print(name + ' not found in source ' + source_name + ': skipping.')
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--specificities-dir', default = './specificities', dest = 'specificities_dir',
-        help = 'path of directory containing merge particularities in YAML files')
-    parser.add_argument('--mim-dir', dest = 'mim_dir',
-        help = 'path of source directory containing YAML files extracted from MIMx')
-    parser.add_argument('--udd-dir', dest = 'udd_dir',
-        help = 'path of source directory containing YAML files extracted from Universal Debian Database (UDD)')
-    parser.add_argument('--debian-appstream-dir', dest = 'debian_appstream_dir',
-        help = 'path of source directory containing YAML files extrated from Debian Appstream')
-    parser.add_argument('target_dir', help = 'path of target directory for generated YAML files')
-    parser.add_argument('-c', '--create', action = 'store_true', default = False, help = 'create empty files in destination (you must then merge)')
-    parser.add_argument('-v', '--verbose', action = 'store_true', default = False, help = 'increase output verbosity')
+    parser.add_argument('--specificities-dir', default='./specificities', dest='specificities_dir',
+        help='path of directory containing merge particularities in YAML files')
+    parser.add_argument('--mim-dir', dest='mim_dir',
+        help='path of source directory containing YAML files extracted from MIMx')
+    parser.add_argument('--udd-dir', dest='udd_dir',
+        help='path of source directory containing YAML files extracted from Universal Debian Database (UDD)')
+    parser.add_argument('--debian-appstream-dir', dest='debian_appstream_dir',
+        help='path of source directory containing YAML files extrated from Debian Appstream')
+    parser.add_argument('--wikidata-dir', dest='wikidata_dir',
+        help='path of source directory containing YAML files extrated from Wikidata')
+    parser.add_argument('target_dir', help='path of target directory for generated YAML files')
+    parser.add_argument('-c', '--create', action='store_true', default=False, help='create empty files in destination (you must then merge)')
+    parser.add_argument('-v', '--verbose', action='store_true', default=False, help='increase output verbosity')
     global args
     args = parser.parse_args()
 
-    logging.basicConfig(level = logging.DEBUG if args.verbose else logging.WARNING, stream = sys.stdout)
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING, stream=sys.stdout)
 
     if not os.path.exists(args.target_dir):
         os.makedirs(args.target_dir)
@@ -174,7 +182,7 @@ def main():
             print('Merging from mim not implemented.')
             return 0
 
-    elif args.udd_dir is not None:
+    if args.udd_dir is not None:
         if args.create:
             print('Creating from Debian UDD not implemented.')
             return 0
@@ -185,8 +193,7 @@ def main():
                 'description_url': 'https://wiki.debian.org/UltimateDebianDatabase'
             }, read_source_data_debian)
 
-
-    elif args.debian_appstream_dir is not None:
+    if args.debian_appstream_dir is not None:
         if args.create:
             create_dest(args.target_dir, args.debian_appstream_dir, 'debian_appstream')
         else:
@@ -196,10 +203,21 @@ def main():
                 'description': 'https://wiki.debian.org/AppStream'
             })
 
+    if args.wikidata_dir is not None:
+        if args.create:
+            print('Creating from Wikidata not implemented.')
+        else:
+            marge_source(args.target_dir, args.wikidata_dir, 'wikidata', {
+                'name': 'Wikidata',
+                'url', 'https://git.framasoft.org/codegouv/wikidata-yaml',
+                'description': 'http://wikidata.org/'
+            })
+
     else:
         print('No sources selected: use --help to get more information.')
 
     return 0
+
 
 def read_source_data_debian(debian_name):
     apt_pkg.init()
@@ -209,7 +227,7 @@ def read_source_data_debian(debian_name):
         'packages',
         debian_name[:4] if debian_name.startswith('lib') else debian_name[0],
         '{}.yaml'.format(debian_name)
-        )
+    )
     if os.path.exists(debian_package_path):
         with open(debian_package_path) as debian_package_file:
             debian_package = yaml.load(debian_package_file)
@@ -221,7 +239,7 @@ def read_source_data_debian(debian_name):
         'sources',
         debian_name[:4] if debian_name.startswith('lib') else debian_name[0],
         '{}.yaml'.format(debian_name)
-        )
+    )
     if os.path.exists(debian_source_path):
         with open(debian_source_path) as debian_source_file:
             debian_source = yaml.load(debian_source_file)
@@ -272,7 +290,7 @@ def read_source_data_debian(debian_name):
                     ('large_image_url', screenshot['large_image_url']),
                     ('screenshot_url', screenshot['screenshot_url']),
                     ('small_image_url', screenshot['small_image_url']),
-                    ])
+                ])
 
         if debian_source is not None:
             security_issues = debian_source.get('security_issues')
