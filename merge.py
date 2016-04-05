@@ -207,9 +207,9 @@ def main():
         if args.create:
             print('Creating from Wikidata not implemented.')
         else:
-            marge_source(args.target_dir, args.wikidata_dir, 'wikidata', {
+            merge_source(args.target_dir, args.wikidata_dir, 'wikidata', {
                 'name': 'Wikidata',
-                'url', 'https://git.framasoft.org/codegouv/wikidata-yaml',
+                'url': 'https://git.framasoft.org/codegouv/wikidata-yaml',
                 'description': 'http://wikidata.org/'
             })
 
