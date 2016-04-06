@@ -207,6 +207,16 @@ def main():
                 'description': 'http://wikidata.org/'
             })
 
+    elif args.source_name == 'civicstack':
+        if args.create:
+            print('Creating from civicstack not implemented.')
+        else:
+            merge_source(args.target_dir, args.source_dir, 'civicstack', {
+                'name': 'civicstack',
+                'url': 'https://git.framasoft.org/codegouv/civicstack-yaml',
+                'description': 'http://www.civicstack.org/'
+            })
+
     else:
         print('No valid sources selected: use --help to get more information.')
 
