@@ -154,16 +154,10 @@ def merge_source(dest_dir, source_dir, source_name, source_desc, read_source_dat
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('source_name', help='source name among the ones known by the merger (mim, udd, debian-apstream, wikidata, civicstack)')
+    parser.add_argument('source_dir', help='path of source data directory')
     parser.add_argument('--specificities-dir', default='./specificities', dest='specificities_dir',
         help='path of directory containing merge particularities in YAML files')
-    parser.add_argument('--mim-dir', dest='mim_dir',
-        help='path of source directory containing YAML files extracted from MIMx')
-    parser.add_argument('--udd-dir', dest='udd_dir',
-        help='path of source directory containing YAML files extracted from Universal Debian Database (UDD)')
-    parser.add_argument('--debian-appstream-dir', dest='debian_appstream_dir',
-        help='path of source directory containing YAML files extrated from Debian Appstream')
-    parser.add_argument('--wikidata-dir', dest='wikidata_dir',
-        help='path of source directory containing YAML files extrated from Wikidata')
     parser.add_argument('target_dir', help='path of target directory for generated YAML files')
     parser.add_argument('-c', '--create', action='store_true', default=False, help='create empty files in destination (you must then merge)')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='increase output verbosity')
@@ -175,46 +169,46 @@ def main():
     if not os.path.exists(args.target_dir):
         os.makedirs(args.target_dir)
 
-    if args.mim_dir is not None:
+    if args.source_name == 'mim':
         if args.create:
-            create_dest(args.target_dir, args.mim_dir, 'mim')
+            create_dest(args.target_dir, args.source_dir, 'mim')
         else:
             print('Merging from mim not implemented.')
             return 0
 
-    if args.udd_dir is not None:
+    elif args.source_name == 'udd':
         if args.create:
             print('Creating from Debian UDD not implemented.')
             return 0
         else:
-            merge_source(args.target_dir, args.udd_dir, 'debian', {
+            merge_source(args.target_dir, args.source_dir, 'debian', {
                 'name': 'Universal Debian Database',
                 'url': 'https://git.framasoft.org/codegouv/udd-yaml',
                 'description_url': 'https://wiki.debian.org/UltimateDebianDatabase'
             }, read_source_data_debian)
 
-    if args.debian_appstream_dir is not None:
+    elif args.source_name == 'debian-appstream':
         if args.create:
-            create_dest(args.target_dir, args.debian_appstream_dir, 'debian_appstream')
+            create_dest(args.target_dir, args.source_dir, 'debian_appstream')
         else:
-            merge_source(args.target_dir, args.debian_appstream_dir, 'debian_appstream', {
+            merge_source(args.target_dir, args.source_dir, 'debian_appstream', {
                 'name': 'Debian Appstream',
                 'url': 'https://git.framasoft.org/codegouv/appstream-debian-yaml',
                 'description': 'https://wiki.debian.org/AppStream'
             })
 
-    if args.wikidata_dir is not None:
+    elif args.source_name == 'wikidata':
         if args.create:
             print('Creating from Wikidata not implemented.')
         else:
-            merge_source(args.target_dir, args.wikidata_dir, 'wikidata', {
+            merge_source(args.target_dir, args.source_dir, 'wikidata', {
                 'name': 'Wikidata',
                 'url': 'https://git.framasoft.org/codegouv/wikidata-yaml',
                 'description': 'http://wikidata.org/'
             })
 
     else:
-        print('No sources selected: use --help to get more information.')
+        print('No valid sources selected: use --help to get more information.')
 
     return 0
 
