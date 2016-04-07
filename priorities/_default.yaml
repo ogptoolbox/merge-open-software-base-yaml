@@ -1,5 +1,6 @@
 canonicalName:
   - debian_appstream.Name.C
+  - wikidata.program_enlabel.0.value
 longDescription:
   fr:
     - debian.description.fr.long_description
