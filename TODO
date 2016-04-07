@@ -1,0 +1,3 @@
+* chaque source est soit :
+	* une source de complétion de données (pas d'ajout de programme) (Wikidata, Debian=
+	* une source d'ajout de programmes (avec une ignore list) (Appstream, mim, Civicstack)

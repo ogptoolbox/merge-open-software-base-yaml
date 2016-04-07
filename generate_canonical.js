@@ -111,6 +111,14 @@ var updateFile = co.wrap(function *(fileName) {
       return (sortKeys(b, a)) * -1;
     }
 
+    if (a < b) {
+      return -1;
+    }
+
+    if (a > b) {
+      return 1;
+    }
+
     return 0;
   };
 
