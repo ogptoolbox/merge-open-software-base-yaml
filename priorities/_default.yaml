@@ -10,5 +10,6 @@ longDescription:
     - debian.description.es.long_description
 screenshot:
   - debian.screenshot.large_image_url
+  - wikidata.image.0.value
 stackexchangeTag:
   - wikidata.stackexchange_tag.0.value
