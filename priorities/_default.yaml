@@ -1,6 +1,10 @@
 canonicalName:
   - debian_appstream.Name.C
   - wikidata.program_enlabel.0.value
+license:
+  - wikidata.license_enlabel.0.value
+sourceCode:
+  - wikidata.source_code.0.value
 longDescription:
   fr:
     - debian.description.fr.long_description
