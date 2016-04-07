@@ -5,6 +5,8 @@ license:
   - wikidata.license_enlabel.0.value
 sourceCode:
   - wikidata.source_code.0.value
+bugTracker:
+  - wikidata.bug_tracker.0.value
 longDescription:
   fr:
     - debian.description.fr.long_description
