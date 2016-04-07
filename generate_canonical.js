@@ -7,6 +7,17 @@ const path = require('path');
 const program = require('commander');
 const yaml = require('js-yaml');
 
+var fileExists = fs.existsSync || function existsSync(filePath) {
+  try {
+    fs.statSync(filePath);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      return false;
+    }
+  }
+  return true;
+};
+
 var get = (obj, keyString) => {
   return keyString.split('.').reduce((o, key) => {
     return (typeof o === 'undefined' || o === null || key === '') ? o : o[key];
@@ -28,13 +39,16 @@ var set = (obj, keyString, value) => {
   }, obj);
 };
 
-var updateFromPriorities = (destData, prioritiesList, sourceData) => {
+var updateFromPriorities = (destData, defaultPrioritiesList, customPrioritiesList, sourceData) => {
   // on which property path are we working
   var propertyPath = [];
 
   var updateKey = propertyString => {
-    var keyPriorities = get(prioritiesList, propertyString);
-    var property;
+    var keyPriorities = get(defaultPrioritiesList, propertyString);
+    keyPriorities =
+      (propertyString && customPrioritiesList &&
+      get(customPrioritiesList, propertyString)) ||
+      keyPriorities;
 
     if (Array.isArray(keyPriorities)) {
       // if the object in priorities is an array, we have a list of property
@@ -67,9 +81,16 @@ var updateFile = co.wrap(function *(fileName) {
   var data = yaml.safeLoad(yield fs.readFile(fileName));
   data.canonical = {};
 
-  var priorities = yaml.safeLoad(yield fs.readFile('./priorities/_default.yaml'));
+  var defaultPriorities = yaml.safeLoad(
+    yield fs.readFile('./priorities/_default.yaml'));
+  var customPrioritiesFileName = path.join(
+    './priorities', fileName.split('/')[fileName.split('/').length - 1]
+  );
+  var customPriorities = fileExists(customPrioritiesFileName) &&
+    yaml.safeLoad(yield fs.readFile(customPrioritiesFileName));
 
-  updateFromPriorities(data.canonical, priorities, data);
+  updateFromPriorities(data.canonical, defaultPriorities, customPriorities,
+    data);
 
   yield fs.writeFile(fileName, data);
 
