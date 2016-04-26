@@ -14,8 +14,8 @@ cd merge-open-software-base-yaml
 
 ### Step 1: merge sources to YAML files
 
-```bash
-./merge.py --help
+```
+$ ./merge.py --help
 usage: merge.py [-h] [--specificities-dir SPECIFICITIES_DIR] [-c] [-v]
                 source_name source_dir target_dir
 
@@ -30,8 +30,10 @@ optional arguments:
   --specificities-dir SPECIFICITIES_DIR
                         path of directory containing merge particularities in
                         YAML files
-  -c, --create          create empty files in destination (you must then
-                        merge)
+  -c, --create          by default, the script only add information to
+                        existing files. With --create, when a program does not
+                        have a file, the user is asked if they want to create
+                        the file.
   -v, --verbose         increase output verbosity
 
  ./merge.py udd ../data/udd|yaml.git ../open

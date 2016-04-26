@@ -108,10 +108,13 @@ def create_dest(dest_dir, source_dir, source_name):
         data_path = os.path.join(dest_dir, '{}.yaml'.format(name))
 
         if not os.path.exists(data_path):
-            with open(data_path, 'w') as new_file:
-                data = {'name': name}
-                yaml.dump(data, new_file, allow_unicode=True, default_flow_style=False, indent=2, width=120)
-                print(name + ' not found in dest. Creating file.')
+            print("\n")
+            print(yaml.dump(source_data))
+            msg = 'File for ' + name + ' does not exist. Create it ? '
+            if input("%s (y/N) " % msg).lower() == 'y':
+                with open(data_path, 'w') as new_file:
+                    data = {'name': name}
+                    yaml.dump(data, new_file, allow_unicode=True, default_flow_style=False, indent=2, width=120)
 
 
 def merge_source(dest_dir, source_dir, source_name, source_desc, read_source_data=None):
@@ -159,7 +162,7 @@ def main():
     parser.add_argument('--specificities-dir', default='./specificities', dest='specificities_dir',
         help='path of directory containing merge particularities in YAML files')
     parser.add_argument('target_dir', help='path of target directory for generated YAML files')
-    parser.add_argument('-c', '--create', action='store_true', default=False, help='create empty files in destination (you must then merge)')
+    parser.add_argument('-c', '--create', action='store_true', default=False, help='by default, the script only add information to existing files. With --create, when a program does not have a file, the user is asked if they want to create the file.')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='increase output verbosity')
     global args
     args = parser.parse_args()
@@ -172,50 +175,45 @@ def main():
     if args.source_name == 'mim':
         if args.create:
             create_dest(args.target_dir, args.source_dir, 'mim')
-        else:
-            print('Merging from mim not implemented.')
-            return 0
+        print('Merging from mim not implemented.')
+        return 0
 
     elif args.source_name == 'udd':
         if args.create:
             print('Creating from Debian UDD not implemented.')
-            return 0
-        else:
-            merge_source(args.target_dir, args.source_dir, 'debian', {
-                'name': 'Universal Debian Database',
-                'url': 'https://git.framasoft.org/codegouv/udd-yaml',
-                'description_url': 'https://wiki.debian.org/UltimateDebianDatabase'
-            }, read_source_data_debian)
+        merge_source(args.target_dir, args.source_dir, 'debian', {
+            'name': 'Universal Debian Database',
+            'url': 'https://git.framasoft.org/codegouv/udd-yaml',
+            'description_url': 'https://wiki.debian.org/UltimateDebianDatabase'
+        }, read_source_data_debian)
+        return 0
 
     elif args.source_name == 'debian-appstream':
         if args.create:
             create_dest(args.target_dir, args.source_dir, 'debian_appstream')
-        else:
-            merge_source(args.target_dir, args.source_dir, 'debian_appstream', {
-                'name': 'Debian Appstream',
-                'url': 'https://git.framasoft.org/codegouv/appstream-debian-yaml',
-                'description': 'https://wiki.debian.org/AppStream'
-            })
+        merge_source(args.target_dir, args.source_dir, 'debian_appstream', {
+            'name': 'Debian Appstream',
+            'url': 'https://git.framasoft.org/codegouv/appstream-debian-yaml',
+            'description': 'https://wiki.debian.org/AppStream'
+        })
 
     elif args.source_name == 'wikidata':
         if args.create:
             print('Creating from Wikidata not implemented.')
-        else:
-            merge_source(args.target_dir, args.source_dir, 'wikidata', {
-                'name': 'Wikidata',
-                'url': 'https://git.framasoft.org/codegouv/wikidata-yaml',
-                'description': 'http://wikidata.org/'
-            })
+        merge_source(args.target_dir, args.source_dir, 'wikidata', {
+            'name': 'Wikidata',
+            'url': 'https://git.framasoft.org/codegouv/wikidata-yaml',
+            'description': 'http://wikidata.org/'
+        })
 
     elif args.source_name == 'civicstack':
         if args.create:
-            print('Creating from civicstack not implemented.')
-        else:
-            merge_source(args.target_dir, args.source_dir, 'civicstack', {
-                'name': 'civicstack',
-                'url': 'https://git.framasoft.org/codegouv/civicstack-yaml',
-                'description': 'http://www.civicstack.org/'
-            })
+            create_dest(args.target_dir, args.source_dir, 'civicstack')
+        merge_source(args.target_dir, args.source_dir, 'civicstack', {
+            'name': 'civicstack',
+            'url': 'https://git.framasoft.org/codegouv/civicstack-yaml',
+            'description': 'http://www.civicstack.org/'
+        })
 
     else:
         print('No valid sources selected: use --help to get more information.')
