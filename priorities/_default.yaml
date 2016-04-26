@@ -1,19 +1,24 @@
 canonicalName:
   - debian_appstream.Name.C
   - wikidata.program_enlabel.0.value
+  - civicstack.name
 license:
   - wikidata.license_enlabel.0.value
 sourceCode:
   - wikidata.source_code.0.value
+  - civicstack.github
 bugTracker:
   - wikidata.bug_tracker.0.value
 longDescription:
   fr:
     - debian.description.fr.long_description
+    - civicstack.description.fr
   en:
     - debian.description.en.long_description
+    - civicstack.description.en
   es:
     - debian.description.es.long_description
+    - civicstack.description.es
 screenshot:
   - debian.screenshot.large_image_url
   - wikidata.image.0.value
