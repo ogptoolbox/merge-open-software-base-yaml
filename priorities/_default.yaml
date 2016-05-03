@@ -4,6 +4,7 @@ canonicalName:
   - civicstack.name
 license:
   - wikidata.license_enlabel.0.value
+  - civicstack.license.name.en
 sourceCode:
   - wikidata.source_code.0.value
   - civicstack.github
@@ -24,3 +25,16 @@ screenshot:
   - wikidata.image.0.value
 stackexchangeTag:
   - wikidata.stackexchange_tag.0.value
+categories[]:
+  - debian_appstream.Categories
+  - civicstack.category.name.en
+technology:
+  fr:
+    - civicstack.technology.0.name.fr
+    - civicstack.technology.0.name
+  en:
+    - civicstack.technology.0.name.en
+    - civicstack.technology.0.name
+  es:
+    - civicstack.technology.0.name.es
+    - civicstack.technology.0.name

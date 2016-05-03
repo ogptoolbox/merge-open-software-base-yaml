@@ -58,6 +58,16 @@ var updateFromPriorities = (destData, defaultPrioritiesList, customPrioritiesLis
         var value = get(sourceData, keyPriorities[i]);
         if (typeof value !== 'undefined') {
           var source = keyPriorities[i].split('.')[0];
+          if (propertyString.match(/\[\]$/)) {
+            let current = get(destData, propertyString.replace(/\[|]$/, ''));
+            current = (current || []).concat(
+              Array.isArray(value) ?
+              value.map(elem => ({value: elem, source})) : // eslint-disable-line no-loop-func
+              {value, source}
+            );
+            set(destData, propertyString.replace(/\[\]$/, ''), current);
+            continue;
+          }
           set(destData, propertyString, {value, source});
           break;
         }
