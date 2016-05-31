@@ -108,10 +108,11 @@ def create_dest(dest_dir, source_dir, source_name):
         data_path = os.path.join(dest_dir, '{}.yaml'.format(name))
 
         if not os.path.exists(data_path):
-            print("\n")
-            print(yaml.dump(source_data))
-            msg = 'File for ' + name + ' does not exist. Create it ? '
-            if input("%s (y/N) " % msg).lower() == 'y':
+            if not args.yes:
+                print("\n")
+                print(yaml.dump(source_data))
+                msg = 'File for ' + name + ' does not exist. Create it ? '
+            if args.yes or input("%s (y/N) " % msg).lower() == 'y':
                 with open(data_path, 'w') as new_file:
                     data = {'name': name}
                     yaml.dump(data, new_file, allow_unicode=True, default_flow_style=False, indent=2, width=120)
@@ -163,6 +164,7 @@ def main():
         help='path of directory containing merge particularities in YAML files')
     parser.add_argument('target_dir', help='path of target directory for generated YAML files')
     parser.add_argument('-c', '--create', action='store_true', default=False, help='by default, the script only add information to existing files. With --create, when a program does not have a file, the user is asked if they want to create the file.')
+    parser.add_argument('-y', '--yes', action='store_true', default=False, help='dont ask for confirmation on creation')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='increase output verbosity')
     global args
     args = parser.parse_args()
@@ -213,6 +215,15 @@ def main():
             'name': 'civicstack',
             'url': 'https://git.framasoft.org/codegouv/civicstack-yaml',
             'description': 'http://www.civicstack.org/'
+        })
+
+    elif args.source_name == 'tech-plateforms':
+        if args.create:
+            create_dest(args.target_dir, args.source_dir, 'tech-plateforms')
+        merge_source(args.target_dir, args.source_dir, 'tech-plateforms', {
+            'name': 'Tech Plateforms for Civic Participations',
+            'url': 'https://git.framasoft.org/codegouv/tech-plateforms-yaml',
+            'description': 'https://docs.google.com/spreadsheets/d/1YBZLdNsGohGBjO5e7yrwOQx78IzCA6SNW6T14p15aKU'
         })
 
     else:

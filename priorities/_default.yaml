@@ -2,6 +2,7 @@ canonicalName:
   - debian_appstream.Name.C
   - wikidata.program_enlabel.0.value
   - civicstack.name
+  - tech-plateforms.Name
 license:
   - wikidata.license_enlabel.0.value
   - civicstack.license.name.en
@@ -17,6 +18,7 @@ longDescription:
   en:
     - debian.description.en.long_description
     - civicstack.description.en
+    - tech-plateforms.About
   es:
     - debian.description.es.long_description
     - civicstack.description.es
@@ -28,6 +30,7 @@ stackexchangeTag:
 categories[]:
   - debian_appstream.Categories
   - civicstack.category.name.en
+  - tech-plateforms.CivicTech or GeneralPurpose
 technology:
   fr:
     - civicstack.technology.0.name.fr
