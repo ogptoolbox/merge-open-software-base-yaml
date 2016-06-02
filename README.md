@@ -36,13 +36,13 @@ optional arguments:
                         the file.
   -v, --verbose         increase output verbosity
 
- ./merge.py udd ../data/udd|yaml.git ../open
+ ./merge.py udd ../data/udd-yaml.git ../open-software-base-yaml
 
 ```
 
 ### Step 2: clean data and merge canonical data
 
-This step build the `canonical` key aggregates data from the various present sources. You need node.js to run this step.
+This step builds the `canonical` key aggregates data from the various present sources. You need node.js to run this step.
 
 ```bash
 npm install
