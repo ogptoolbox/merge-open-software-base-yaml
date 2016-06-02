@@ -158,7 +158,7 @@ def merge_source(dest_dir, source_dir, source_name, source_desc, read_source_dat
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('source_name', help='source name among the ones known by the merger (mim, udd, debian-apstream, wikidata, civicstack)')
+    parser.add_argument('source_name', help='source name among the ones known by the merger (mim, udd, debian-apstream, wikidata, civicstack, nuit-debout)')
     parser.add_argument('source_dir', help='path of source data directory')
     parser.add_argument('--specificities-dir', default='./specificities', dest='specificities_dir',
         help='path of directory containing merge particularities in YAML files')
@@ -224,6 +224,15 @@ def main():
             'name': 'Tech Plateforms for Civic Participations',
             'url': 'https://git.framasoft.org/codegouv/tech-plateforms-yaml',
             'description': 'https://docs.google.com/spreadsheets/d/1YBZLdNsGohGBjO5e7yrwOQx78IzCA6SNW6T14p15aKU'
+        })
+
+    elif args.source_name == 'nuit-debout':
+        if args.create:
+            create_dest(args.target_dir, args.source_dir, 'nuit-debout')
+        merge_source(args.target_dir, args.source_dir, 'nuit-debout', {
+            'name': 'nuit-debout',
+            'url': 'https://git.framasoft.org/codegouv/nuit-debout-yaml',
+            'description': "https://wiki.nuitdebout.fr/wiki/Ressources/Liste_d'outils_numériques"
         })
 
     else:

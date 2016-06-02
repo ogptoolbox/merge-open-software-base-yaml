@@ -3,18 +3,22 @@ canonicalName:
   - wikidata.program_enlabel.0.value
   - civicstack.name
   - tech-plateforms.Name
+  - nuit-debout.Outil
 license:
   - wikidata.license_enlabel.0.value
   - civicstack.license.name.en
+  - nuit-debout.Nom de la licence
 sourceCode:
   - wikidata.source_code.0.value
   - civicstack.github
+  - nuit-debout.Lien vers le code
 bugTracker:
   - wikidata.bug_tracker.0.value
 longDescription:
   fr:
     - debian.description.fr.long_description
     - civicstack.description.fr
+    - nuit-debout.Détails
   en:
     - debian.description.en.long_description
     - civicstack.description.en
@@ -31,6 +35,7 @@ categories[]:
   - debian_appstream.Categories
   - civicstack.category.name.en
   - tech-plateforms.CivicTech or GeneralPurpose
+  - nuit-debout.Fonction
 technology:
   fr:
     - civicstack.technology.0.name.fr
