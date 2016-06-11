@@ -4,16 +4,21 @@ canonicalName:
   - civicstack.name
   - tech-plateforms.Name
   - nuit-debout.Outil
+  - participatedb.Name
+  - ogptoolbox-framacalc.Nom
 license:
   - wikidata.license_enlabel.0.value
   - civicstack.license.name.en
   - nuit-debout.Nom de la licence
+  - ogptoolbox-framacalc.Licence
 sourceCode:
   - wikidata.source_code.0.value
   - civicstack.github
   - nuit-debout.Lien vers le code
+  - ogptoolbox-framacalc.URL code source
 bugTracker:
   - wikidata.bug_tracker.0.value
+  - ogptoolbox-framacalc.URL suivi de bogues
 longDescription:
   fr:
     - debian.description.fr.long_description
@@ -23,23 +28,30 @@ longDescription:
     - debian.description.en.long_description
     - civicstack.description.en
     - tech-plateforms.About
+    - participatedb.Description
   es:
     - debian.description.es.long_description
     - civicstack.description.es
 screenshot:
   - debian.screenshot.large_image_url
   - wikidata.image.0.value
+  - ogptoolbox-framacalc.Capture d'écran
 stackexchangeTag:
   - wikidata.stackexchange_tag.0.value
+  - ogptoolbox-framacalc.Tag stack exchange
 categories[]:
   - debian_appstream.Categories
   - civicstack.category.name.en
   - tech-plateforms.CivicTech or GeneralPurpose
   - nuit-debout.Fonction
+  - participatedb.Category
+  - participatedb.category
+  - ogptoolbox-framacalc.Catégorie
 technology:
   fr:
     - civicstack.technology.0.name.fr
     - civicstack.technology.0.name
+    - ogptoolbox-framacalc.Technologies
   en:
     - civicstack.technology.0.name.en
     - civicstack.technology.0.name

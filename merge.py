@@ -158,7 +158,7 @@ def merge_source(dest_dir, source_dir, source_name, source_desc, read_source_dat
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('source_name', help='source name among the ones known by the merger (mim, udd, debian-apstream, wikidata, civicstack, nuit-debout)')
+    parser.add_argument('source_name', help='source name among the ones known by the merger (mim, udd, debian-apstream, wikidata, civicstack, nuit-debout, participatedb, ogptoolbox-framacalc)')
     parser.add_argument('source_dir', help='path of source data directory')
     parser.add_argument('--specificities-dir', default='./specificities', dest='specificities_dir',
         help='path of directory containing merge particularities in YAML files')
@@ -233,6 +233,24 @@ def main():
             'name': 'nuit-debout',
             'url': 'https://git.framasoft.org/codegouv/nuit-debout-yaml',
             'description': "https://wiki.nuitdebout.fr/wiki/Ressources/Liste_d'outils_numériques"
+        })
+
+    elif args.source_name == 'participatedb':
+        if args.create:
+            create_dest(args.target_dir, args.source_dir, 'participatedb')
+        merge_source(args.target_dir, args.source_dir, 'participatedb', {
+            'name': 'ParticipateDB',
+            'url': 'https://git.framasoft.org/codegouv/participatedb-yaml',
+            'description': "http://www.participatedb.com/"
+        })
+
+    elif args.source_name == 'ogptoolbox-framacalc':
+        if args.create:
+            create_dest(args.target_dir, args.source_dir, 'ogptoolbox-framacalc')
+        merge_source(args.target_dir, args.source_dir, 'ogptoolbox-framacalc', {
+            'name': 'OGP Toolbox Framacalc',
+            'url': 'https://git.framasoft.org/codegouv/ogptoolbox-framacalc-yaml',
+            'description': "https://framacalc.org/ogptoolbox"
         })
 
     else:
