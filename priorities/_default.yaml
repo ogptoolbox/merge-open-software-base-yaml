@@ -24,6 +24,7 @@ longDescription:
     - debian.description.fr.long_description
     - civicstack.description.fr
     - nuit-debout.Détails
+    - ogptoolbox-framacalc.Description
   en:
     - debian.description.en.long_description
     - civicstack.description.en
