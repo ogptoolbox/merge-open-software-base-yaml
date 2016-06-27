@@ -1,3 +1,13 @@
+#
+# The canonical name of the tool.
+#
+# Example: Firefox (camel case) is the canonicalName of http://getfirefox.com/
+# according to https://www.wikidata.org/.
+#
+# The lowercase version of this name is the unique
+# name of the tool and the slugified version of this unique name is the
+# file name for the tool.
+#
 canonicalName:
   - debian_appstream.Name.C
   - wikidata.program_enlabel.0.value
@@ -6,19 +16,35 @@ canonicalName:
   - nuit-debout.Outil
   - participatedb.Name
   - ogptoolbox-framacalc.Nom
+#
+# The name of the license governing the tool.
+#
 license:
   - wikidata.license_enlabel.0.value
   - civicstack.license.name.en
   - nuit-debout.Nom de la licence
   - ogptoolbox-framacalc.Licence
+#
+# The URL from which the source code of the tool
+# can be obtained.
+#
 sourceCode:
   - wikidata.source_code.0.value
   - civicstack.github
   - nuit-debout.Lien vers le code
   - ogptoolbox-framacalc.URL code source
+#
+# The URL of the service where bugs related to the
+# tool can be reported.
+#
 bugTracker:
   - wikidata.bug_tracker.0.value
   - ogptoolbox-framacalc.URL suivi de bogues
+#
+# The long description of the tool, for each
+# supported language, in a map indexed by
+# the two letter (ISO-639-1) language code.
+#
 longDescription:
   fr:
     - debian.description.fr.long_description
@@ -33,13 +59,24 @@ longDescription:
   es:
     - debian.description.es.long_description
     - civicstack.description.es
+#
+# The URL of a screenshot displaying the tool
+# user interface.
+#
 screenshot:
   - debian.screenshot.large_image_url
   - wikidata.image.0.value
   - ogptoolbox-framacalc.Capture d'écran
+#
+# The http://stackexchange.org/ tag uniquely associated
+# with the tool.
+#
 stackexchangeTag:
   - wikidata.stackexchange_tag.0.value
   - ogptoolbox-framacalc.Tag stack exchange
+#
+# A list of categories that apply to the tool.
+#
 categories[]:
   - debian_appstream.Categories
   - civicstack.category.name.en
@@ -48,6 +85,10 @@ categories[]:
   - participatedb.Category
   - participatedb.category
   - ogptoolbox-framacalc.Catégorie
+#
+# A list (within a string) of technical pre-requisites and languages
+# required to run and develop the tool.
+#
 technology:
   fr:
     - civicstack.technology.0.name.fr
