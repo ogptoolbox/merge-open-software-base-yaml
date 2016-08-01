@@ -86,7 +86,7 @@ def flatten(paths, flat, path, data):
         if path:
             paths.add(path)
         flat[path] = str(data)
-                
+
 
 def iter_yaml_files(dir):
     assert os.path.exists(dir), "Directory doesn't exist: {}".format(dir)
