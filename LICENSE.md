@@ -1,7 +1,7 @@
 > merge-open-software-base-yaml -- Merge YAML files describing software
 > By: Emmanuel Raviart <emmanuel.raviart@data.gouv.fr>
 >
-> Copyright (C) 2015 Etalab
+> Copyright (C) 2015, 2016 Etalab
 > https://git.framasoft.org/codegouv/merge-open-software-base-yaml
 >
 > merge-open-software-base-yaml is free software; you can redistribute it and/or modify
