@@ -107,15 +107,30 @@ def main():
     data = response.json() 
     api_key = data['data']['apiKey']
 
+    response = requests.get(
+        urllib.parse.urljoin(args.server_url, '/tools'),
+        headers = {
+            "OGPToolbox-API-Key": api_key,
+            },
+        )
+    tools_by_name = {
+        tool['name']: tool
+        for tool in response.json()['data']
+        }
+
     for source_data_path, source_data in iter_yaml_files(args.source_dir):
         canonical = source_data['canonical']
         tool = dict(
             name = source_data['name'],
             )
 
-        description = canonical.get('longDescription', {}).get('fr', {}).get('value')
-        if description is not None:
-            tool['description'] = description
+        description_fr = canonical.get('longDescription', {}).get('fr', {}).get('value')
+        if description_fr is not None:
+            tool['description_fr'] = description_fr
+
+        description_en = canonical.get('longDescription', {}).get('en', {}).get('value')
+        if description_en is not None:
+            tool['description_en'] = description_en
 
         license = canonical.get('license', {}).get('value')
         if license is not None:
@@ -145,19 +160,38 @@ def main():
                 if category['value']
                 ]
             if categories:
-                tool['categories'] = categories
+                tool['otherCategories'] = categories
 
         technology = canonical.get('technology', {}).get('fr', {}).get('value')
         if technology is not None:
             tool['technologies'] = [technology]
 
-        response = requests.post(
-            urllib.parse.urljoin(args.server_url, '/tools'),
+        existing_tool = tools_by_name.get(tool['name'])
+        if existing_tool is None:
+            print('New tool: {}'.format(tool['name']))
+            response = requests.post(
+                urllib.parse.urljoin(args.server_url, '/tools'),
                 headers = {
                     "OGPToolbox-API-Key": api_key,
                     },
                 json = tool,
                 )
+        else:
+            updated_tool = existing_tool.copy()
+            changed = False
+            for key, value in tool.items():
+                if key not in updated_tool:
+                    updated_tool[key] = value
+                    changed = True
+            if changed:
+                print('Updated tool: {}'.format(tool['name']))
+                response = requests.put(
+                    urllib.parse.urljoin(args.server_url, '/tools/{}'.format(updated_tool['id'])),
+                    headers = {
+                        "OGPToolbox-API-Key": api_key,
+                        },
+                    json = updated_tool,
+                    )
 
     return 0
 

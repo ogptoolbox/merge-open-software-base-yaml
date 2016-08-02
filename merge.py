@@ -69,6 +69,28 @@ debian_stable_release_name = 'jessie'
 log = logging.getLogger(app_name)
 
 
+def create_dest(dest_dir, source_dir, source_name):
+    for source_data_path, source_data in iter_yaml_files(source_dir):
+        name = os.path.splitext(os.path.basename(source_data_path))[0]
+
+        specificity_path = os.path.join(args.specificities_dir, '{}.yaml'.format(name))
+        if os.path.exists(specificity_path):
+            with open(specificity_path) as specificity_file:
+                name = yaml.load(specificity_file).get(source_name, {'name': name}).get('name')
+
+        data_path = os.path.join(dest_dir, '{}.yaml'.format(name))
+
+        if not os.path.exists(data_path):
+            if not args.yes:
+                print("\n")
+                print(yaml.dump(source_data))
+                msg = 'File for ' + name + ' does not exist. Create it ? '
+            if args.yes or input("%s (y/N) " % msg).lower() == 'y':
+                with open(data_path, 'w') as new_file:
+                    data = {'name': name}
+                    yaml.dump(data, new_file, allow_unicode=True, default_flow_style=False, indent=2, width=120)
+
+
 def extract_latest_debian_screenshot(*screenshots):
     latest_number = -1
     latest_screenshot = None
@@ -94,66 +116,6 @@ def iter_yaml_files(dir):
             yaml_file_path = os.path.join(sub_dir, filename)
             with open(yaml_file_path) as yaml_file:
                 yield yaml_file_path, yaml.load(yaml_file)
-
-
-def create_dest(dest_dir, source_dir, source_name):
-    for source_data_path, source_data in iter_yaml_files(source_dir):
-        name = os.path.splitext(os.path.basename(source_data_path))[0]
-
-        specificity_path = os.path.join(args.specificities_dir, '{}.yaml'.format(name))
-        if os.path.exists(specificity_path):
-            with open(specificity_path) as specificity_file:
-                name = yaml.load(specificity_file).get(source_name, {'name': name}).get('name')
-
-        data_path = os.path.join(dest_dir, '{}.yaml'.format(name))
-
-        if not os.path.exists(data_path):
-            if not args.yes:
-                print("\n")
-                print(yaml.dump(source_data))
-                msg = 'File for ' + name + ' does not exist. Create it ? '
-            if args.yes or input("%s (y/N) " % msg).lower() == 'y':
-                with open(data_path, 'w') as new_file:
-                    data = {'name': name}
-                    yaml.dump(data, new_file, allow_unicode=True, default_flow_style=False, indent=2, width=120)
-
-
-def merge_source(dest_dir, source_dir, source_name, source_desc, read_source_data=None):
-    if read_source_data is None:
-        def read_source_data(name):
-            source_path = os.path.join(source_dir, '{}.yaml'.format(name))
-            source_path_alt = os.path.join(source_dir, name[0], '{}.yaml'.format(name))
-
-            if os.path.exists(source_path):
-                with open(source_path) as source_file:
-                    return yaml.load(source_file)
-            elif os.path.exists(source_path_alt):
-                with open(source_path_alt) as source_file:
-                    return yaml.load(source_file)
-            else:
-                return None
-
-    for data_path, data in iter_yaml_files(dest_dir):
-        name = data['name']
-
-        # find if there is specific name in this source
-        specificity_path = os.path.join(args.specificities_dir, '{}.yaml'.format(name))
-        if os.path.exists(specificity_path):
-            with open(specificity_path) as specificity_file:
-                alt_name = yaml.load(specificity_file).get(source_name, {'name': name}).get('name')
-                print('Using ' + alt_name + ' instead of ' + name + ' in source ' + source_name)
-                name = alt_name
-
-        source_data = read_source_data(name)
-
-        # find source file
-        if source_data is not None:
-            source_data['_source'] = source_desc
-            data[source_name] = source_data
-            with open(data_path, 'w') as yaml_file:
-                yaml.dump(data, yaml_file, allow_unicode=True, default_flow_style=False, indent=2, width=120)
-        else:
-            print(name + ' not found in source ' + source_name + ': skipping.')
 
 
 def main():
@@ -259,6 +221,44 @@ def main():
     return 0
 
 
+def merge_source(dest_dir, source_dir, source_name, source_desc, read_source_data=None):
+    if read_source_data is None:
+        def read_source_data(name):
+            source_path = os.path.join(source_dir, '{}.yaml'.format(name))
+            source_path_alt = os.path.join(source_dir, name[0], '{}.yaml'.format(name))
+
+            if os.path.exists(source_path):
+                with open(source_path) as source_file:
+                    return yaml.load(source_file)
+            elif os.path.exists(source_path_alt):
+                with open(source_path_alt) as source_file:
+                    return yaml.load(source_file)
+            else:
+                return None
+
+    for data_path, data in iter_yaml_files(dest_dir):
+        name = data['name']
+
+        # find if there is specific name in this source
+        specificity_path = os.path.join(args.specificities_dir, '{}.yaml'.format(name))
+        if os.path.exists(specificity_path):
+            with open(specificity_path) as specificity_file:
+                alt_name = yaml.load(specificity_file).get(source_name, {'name': name}).get('name')
+                print('Using ' + alt_name + ' instead of ' + name + ' in source ' + source_name)
+                name = alt_name
+
+        source_data = read_source_data(name)
+
+        # find source file
+        if source_data is not None:
+            source_data['_source'] = source_desc
+            data[source_name] = source_data
+            with open(data_path, 'w') as yaml_file:
+                yaml.dump(data, yaml_file, allow_unicode=True, default_flow_style=False, indent=2, width=120)
+        else:
+            print(name + ' not found in source ' + source_name + ': skipping.')
+
+
 def read_source_data_debian(debian_name):
     apt_pkg.init()
 
@@ -341,6 +341,7 @@ def read_source_data_debian(debian_name):
         return debian
 
     return None
+
 
 if __name__ == "__main__":
     sys.exit(main())
