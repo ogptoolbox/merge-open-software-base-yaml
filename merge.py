@@ -136,21 +136,14 @@ def main():
     if not os.path.exists(args.target_dir):
         os.makedirs(args.target_dir)
 
-    if args.source_name == 'mim':
+    if args.source_name == 'civicstack':
         if args.create:
-            create_dest(args.target_dir, args.source_dir, 'mim')
-        print('Merging from mim not implemented.')
-        return 0
-
-    elif args.source_name == 'udd':
-        if args.create:
-            print('Creating from Debian UDD not implemented.')
-        merge_source(args.target_dir, args.source_dir, 'debian', {
-            'name': 'Universal Debian Database',
-            'url': 'https://git.framasoft.org/codegouv/udd-yaml',
-            'description_url': 'https://wiki.debian.org/UltimateDebianDatabase'
-        }, read_source_data_debian)
-        return 0
+            create_dest(args.target_dir, args.source_dir, 'civicstack')
+        merge_source(args.target_dir, args.source_dir, 'civicstack', {
+            'name': 'civicstack',
+            'url': 'https://git.framasoft.org/codegouv/civicstack-yaml',
+            'description': 'http://www.civicstack.org/'
+        })
 
     elif args.source_name == 'debian-appstream':
         if args.create:
@@ -161,32 +154,10 @@ def main():
             'description': 'https://wiki.debian.org/AppStream'
         })
 
-    elif args.source_name == 'wikidata':
+    elif args.source_name == 'mim':
         if args.create:
-            print('Creating from Wikidata not implemented.')
-        merge_source(args.target_dir, args.source_dir, 'wikidata', {
-            'name': 'Wikidata',
-            'url': 'https://git.framasoft.org/codegouv/wikidata-yaml',
-            'description': 'http://wikidata.org/'
-        })
-
-    elif args.source_name == 'civicstack':
-        if args.create:
-            create_dest(args.target_dir, args.source_dir, 'civicstack')
-        merge_source(args.target_dir, args.source_dir, 'civicstack', {
-            'name': 'civicstack',
-            'url': 'https://git.framasoft.org/codegouv/civicstack-yaml',
-            'description': 'http://www.civicstack.org/'
-        })
-
-    elif args.source_name == 'tech-plateforms':
-        if args.create:
-            create_dest(args.target_dir, args.source_dir, 'tech-plateforms')
-        merge_source(args.target_dir, args.source_dir, 'tech-plateforms', {
-            'name': 'Tech Plateforms for Civic Participations',
-            'url': 'https://git.framasoft.org/codegouv/tech-plateforms-yaml',
-            'description': 'https://docs.google.com/spreadsheets/d/1YBZLdNsGohGBjO5e7yrwOQx78IzCA6SNW6T14p15aKU'
-        })
+            create_dest(args.target_dir, args.source_dir, 'mim')
+        print('Merging from mim not implemented.')
 
     elif args.source_name == 'nuit-debout':
         if args.create:
@@ -195,15 +166,6 @@ def main():
             'name': 'nuit-debout',
             'url': 'https://git.framasoft.org/codegouv/nuit-debout-yaml',
             'description': "https://wiki.nuitdebout.fr/wiki/Ressources/Liste_d'outils_numériques"
-        })
-
-    elif args.source_name == 'participatedb':
-        if args.create:
-            create_dest(args.target_dir, args.source_dir, 'participatedb')
-        merge_source(args.target_dir, args.source_dir, 'participatedb', {
-            'name': 'ParticipateDB',
-            'url': 'https://git.framasoft.org/codegouv/participatedb-yaml',
-            'description': "http://www.participatedb.com/"
         })
 
     elif args.source_name == 'ogptoolbox-framacalc':
@@ -215,6 +177,42 @@ def main():
             'description': "https://framacalc.org/ogptoolbox"
         })
 
+    elif args.source_name == 'participatedb':
+        if args.create:
+            create_dest(args.target_dir, args.source_dir, 'participatedb')
+        merge_source(args.target_dir, args.source_dir, 'participatedb', {
+            'name': 'ParticipateDB',
+            'url': 'https://git.framasoft.org/codegouv/participatedb-yaml',
+            'description': "http://www.participatedb.com/"
+        })
+
+    elif args.source_name == 'tech-plateforms':
+        if args.create:
+            create_dest(args.target_dir, args.source_dir, 'tech-plateforms')
+        merge_source(args.target_dir, args.source_dir, 'tech-plateforms', {
+            'name': 'Tech Plateforms for Civic Participations',
+            'url': 'https://git.framasoft.org/codegouv/tech-plateforms-yaml',
+            'description': 'https://docs.google.com/spreadsheets/d/1YBZLdNsGohGBjO5e7yrwOQx78IzCA6SNW6T14p15aKU'
+        })
+
+    elif args.source_name == 'udd':
+        if args.create:
+            print('Creating from Debian UDD not implemented.')
+        merge_source(args.target_dir, args.source_dir, 'debian', {
+            'name': 'Universal Debian Database',
+            'url': 'https://git.framasoft.org/codegouv/udd-yaml',
+            'description_url': 'https://wiki.debian.org/UltimateDebianDatabase'
+        }, read_source_data_debian)
+
+    elif args.source_name == 'wikidata':
+        if args.create:
+            print('Creating from Wikidata not implemented.')
+        merge_source(args.target_dir, args.source_dir, 'wikidata', {
+            'name': 'Wikidata',
+            'url': 'https://git.framasoft.org/codegouv/wikidata-yaml',
+            'description': 'http://wikidata.org/'
+        })
+
     else:
         print('No valid sources selected: use --help to get more information.')
 
@@ -223,18 +221,7 @@ def main():
 
 def merge_source(dest_dir, source_dir, source_name, source_desc, read_source_data=None):
     if read_source_data is None:
-        def read_source_data(name):
-            source_path = os.path.join(source_dir, '{}.yaml'.format(name))
-            source_path_alt = os.path.join(source_dir, name[0], '{}.yaml'.format(name))
-
-            if os.path.exists(source_path):
-                with open(source_path) as source_file:
-                    return yaml.load(source_file)
-            elif os.path.exists(source_path_alt):
-                with open(source_path_alt) as source_file:
-                    return yaml.load(source_file)
-            else:
-                return None
+        read_source_data = read_source_data_default
 
     for data_path, data in iter_yaml_files(dest_dir):
         name = data['name']
@@ -247,7 +234,7 @@ def merge_source(dest_dir, source_dir, source_name, source_desc, read_source_dat
                 print('Using ' + alt_name + ' instead of ' + name + ' in source ' + source_name)
                 name = alt_name
 
-        source_data = read_source_data(name)
+        source_data = read_source_data(source_dir, name)
 
         # find source file
         if source_data is not None:
@@ -259,11 +246,11 @@ def merge_source(dest_dir, source_dir, source_name, source_desc, read_source_dat
             print(name + ' not found in source ' + source_name + ': skipping.')
 
 
-def read_source_data_debian(debian_name):
+def read_source_data_debian(source_dir, debian_name):
     apt_pkg.init()
 
     debian_package_path = os.path.join(
-        args.udd_dir,
+        source_dir,
         'packages',
         debian_name[:4] if debian_name.startswith('lib') else debian_name[0],
         '{}.yaml'.format(debian_name)
@@ -275,7 +262,7 @@ def read_source_data_debian(debian_name):
         debian_package = None
 
     debian_source_path = os.path.join(
-        args.udd_dir,
+        source_dir,
         'sources',
         debian_name[:4] if debian_name.startswith('lib') else debian_name[0],
         '{}.yaml'.format(debian_name)
@@ -341,6 +328,20 @@ def read_source_data_debian(debian_name):
         return debian
 
     return None
+
+
+def read_source_data_default(source_dir, name):
+    source_path = os.path.join(source_dir, '{}.yaml'.format(name))
+    source_path_alt = os.path.join(source_dir, name[0], '{}.yaml'.format(name))
+
+    if os.path.exists(source_path):
+        with open(source_path) as source_file:
+            return yaml.load(source_file)
+    elif os.path.exists(source_path_alt):
+        with open(source_path_alt) as source_file:
+            return yaml.load(source_file)
+    else:
+        return None
 
 
 if __name__ == "__main__":
