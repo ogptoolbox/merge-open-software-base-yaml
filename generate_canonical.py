@@ -67,11 +67,6 @@ yaml.add_representer(str, lambda dumper, data: dumper.represent_scalar(u'tag:yam
 
 app_name = os.path.splitext(os.path.basename(__file__))[0]
 args = None
-languages = [
-    'en',
-    'es',
-    'fr',
-    ]
 log = logging.getLogger(app_name)
 
 
@@ -82,8 +77,6 @@ def extract_from_civicstack_name_id(value):
             yield 'en', name
         else:
             yield from name.items()
-            # for localized_language, localized_name in name.items():
-            #     yield localized_language, localized_name
 
 
 def extract_from_civicstack_name_id_list(value):
