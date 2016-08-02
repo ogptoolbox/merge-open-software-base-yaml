@@ -162,26 +162,19 @@ def main():
         os.makedirs(args.target_dir)
 
     for yaml_file_path, entry in iter_yaml_files(args.source_dir):
-        assert yaml_file_path.startswith(args.source_dir)
         yaml_file_relative_path = os.path.relpath(yaml_file_path, args.source_dir)
 
         canonical = collections.OrderedDict()
 
-        # name
-        # Lowercase version of this name is the unique name of the tool and the slugified version of this unique name is
-        # the file name for the tool.
+        # bugTracker
+        # URL of the service where bugs related to the tool can be reported
         for path in (
-                'debian_appstream.Name.C',
-                'wikidata.program_enlabel.0.value',
-                'civicstack.name',
-                'tech-plateforms.Name',
-                'nuit-debout.Outil',
-                'participatedb.Name',
-                'ogptoolbox-framacalc.Nom',
+                'wikidata.bug_tracker.0.value',
+                'ogptoolbox-framacalc.URL suivi de bogues',
                 ):
             value = get_path(entry, path)
             if value is not None:
-                canonical['name'] = collections.OrderedDict(sorted(dict(
+                canonical['bugTracker'] = collections.OrderedDict(sorted(dict(
                     source = get_path_source(path),
                     value = value,
                     ).items()))
@@ -203,31 +196,21 @@ def main():
                     ).items()))
                 break
 
-        # sourceCode
-        # URL from which the source code of the tool can be obtained.
+        # name
+        # Lowercase version of this name is the unique name of the tool and the slugified version of this unique name is
+        # the file name for the tool.
         for path in (
-                'wikidata.source_code.0.value',
-                'civicstack.github',
-                'nuit-debout.Lien vers le code',
-                'ogptoolbox-framacalc.URL code source',
+                'debian_appstream.Name.C',
+                'wikidata.program_enlabel.0.value',
+                'civicstack.name',
+                'tech-plateforms.Name',
+                'nuit-debout.Outil',
+                'participatedb.Name',
+                'ogptoolbox-framacalc.Nom',
                 ):
             value = get_path(entry, path)
             if value is not None:
-                canonical['sourceCode'] = collections.OrderedDict(sorted(dict(
-                    source = get_path_source(path),
-                    value = value,
-                    ).items()))
-                break
-
-        # bugTracker
-        # URL of the service where bugs related to the tool can be reported
-        for path in (
-                'wikidata.bug_tracker.0.value',
-                'ogptoolbox-framacalc.URL suivi de bogues',
-                ):
-            value = get_path(entry, path)
-            if value is not None:
-                canonical['bugTracker'] = collections.OrderedDict(sorted(dict(
+                canonical['name'] = collections.OrderedDict(sorted(dict(
                     source = get_path_source(path),
                     value = value,
                     ).items()))
@@ -273,6 +256,22 @@ def main():
             value = get_path(entry, path)
             if value is not None:
                 canonical['screenshot'] = collections.OrderedDict(sorted(dict(
+                    source = get_path_source(path),
+                    value = value,
+                    ).items()))
+                break
+
+        # sourceCode
+        # URL from which the source code of the tool can be obtained.
+        for path in (
+                'wikidata.source_code.0.value',
+                'civicstack.github',
+                'nuit-debout.Lien vers le code',
+                'ogptoolbox-framacalc.URL code source',
+                ):
+            value = get_path(entry, path)
+            if value is not None:
+                canonical['sourceCode'] = collections.OrderedDict(sorted(dict(
                     source = get_path_source(path),
                     value = value,
                     ).items()))
