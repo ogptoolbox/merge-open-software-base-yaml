@@ -174,10 +174,10 @@ def main():
                 ):
             value = get_path(entry, path)
             if value is not None:
-                canonical['bugTracker'] = collections.OrderedDict(sorted(dict(
+                canonical['bugTracker'] = dict(
                     source = get_path_source(path),
                     value = value,
-                    ).items()))
+                    )
                 break
 
         # license
@@ -190,10 +190,10 @@ def main():
                 ):
             value = get_path(entry, path)
             if value is not None:
-                canonical['license'] = collections.OrderedDict(sorted(dict(
+                canonical['license'] = dict(
                     source = get_path_source(path),
                     value = value,
-                    ).items()))
+                    )
                 break
 
         # name
@@ -210,10 +210,10 @@ def main():
                 ):
             value = get_path(entry, path)
             if value is not None:
-                canonical['name'] = collections.OrderedDict(sorted(dict(
+                canonical['name'] = dict(
                     source = get_path_source(path),
                     value = value,
-                    ).items()))
+                    )
                 break
 
         # longDescription
@@ -240,10 +240,10 @@ def main():
             for path in paths:
                 value = get_path(entry, path)
                 if value is not None:
-                    canonical.setdefault('longDescription', {})[language] = collections.OrderedDict(sorted(dict(
+                    canonical.setdefault('longDescription', {})[language] = dict(
                         source = get_path_source(path),
                         value = value,
-                        ).items()))
+                        )
                     break
 
         # screenshot
@@ -255,10 +255,10 @@ def main():
                 ):
             value = get_path(entry, path)
             if value is not None:
-                canonical['screenshot'] = collections.OrderedDict(sorted(dict(
+                canonical['screenshot'] = dict(
                     source = get_path_source(path),
                     value = value,
-                    ).items()))
+                    )
                 break
 
         # sourceCode
@@ -271,10 +271,10 @@ def main():
                 ):
             value = get_path(entry, path)
             if value is not None:
-                canonical['sourceCode'] = collections.OrderedDict(sorted(dict(
+                canonical['sourceCode'] = dict(
                     source = get_path_source(path),
                     value = value,
-                    ).items()))
+                    )
                 break
 
         # stackexchangeTag:
@@ -285,10 +285,10 @@ def main():
                 ):
             value = get_path(entry, path)
             if value is not None:
-                canonical['stackexchangeTag'] = collections.OrderedDict(sorted(dict(
+                canonical['stackexchangeTag'] = dict(
                     source = get_path_source(path),
                     value = value,
-                    ).items()))
+                    )
                 break
 
         # tags
@@ -313,10 +313,10 @@ def main():
         if sources_by_value_by_language:
             for language, sources_by_value in sources_by_value_by_language.items():
                 canonical.setdefault('tags', {})[language] = [
-                    collections.OrderedDict(sorted(dict(
+                    dict(
                         sources = sorted(sources),
                         value = value,
-                        ).items()))
+                        )
                     for value, sources in sorted(sources_by_value.items())
                     ]
 
