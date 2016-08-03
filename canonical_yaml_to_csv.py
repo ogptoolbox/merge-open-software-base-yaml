@@ -152,7 +152,11 @@ def main():
             'Screenshot URL',
             'StackExchange Tag',
             ] + ['Tag'] * tagsCount)
+        entries.sort(key = lambda entry: entry['name'] or '')
         for entry in entries:
+            if entry['name'] is None:
+                print('Skipping entry without name: {}'.format(entry))
+                continue
             tags = entry['tags']
             row = [
                 entry['name'] or '',
