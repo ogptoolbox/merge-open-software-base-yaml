@@ -174,11 +174,13 @@ def main():
                 ):
             value = get_path(entry, path)
             if value is not None:
-                canonical['bugTracker'] = dict(
-                    source = get_path_source(path),
-                    value = value,
-                    )
-                break
+                value = value.strip()
+                if value:
+                    canonical['bugTracker'] = dict(
+                        source = get_path_source(path),
+                        value = value,
+                        )
+                    break
 
         # license
         # Name of the license governing the tool.
@@ -190,11 +192,13 @@ def main():
                 ):
             value = get_path(entry, path)
             if value is not None:
-                canonical['license'] = dict(
-                    source = get_path_source(path),
-                    value = value,
-                    )
-                break
+                value = value.strip()
+                if value:
+                    canonical['license'] = dict(
+                        source = get_path_source(path),
+                        value = value,
+                        )
+                    break
 
         # name
         # Lowercase version of this name is the unique name of the tool and the slugified version of this unique name is
@@ -202,6 +206,7 @@ def main():
         for path in (
                 'debian_appstream.Name.C',
                 'wikidata.program_enlabel.0.value',
+                'civic-tech-field-guide.name',
                 'civicstack.name',
                 'tech-plateforms.Name',
                 'nuit-debout.Outil',
@@ -210,11 +215,13 @@ def main():
                 ):
             value = get_path(entry, path)
             if value is not None:
-                canonical['name'] = dict(
-                    source = get_path_source(path),
-                    value = value,
-                    )
-                break
+                value = value.strip()
+                if value:
+                    canonical['name'] = dict(
+                        source = get_path_source(path),
+                        value = value,
+                        )
+                    break
 
         # longDescription
         # Description of the tool, for each supported language, in a map indexed by the two letter (ISO-639-1) language
@@ -240,11 +247,13 @@ def main():
             for path in paths:
                 value = get_path(entry, path)
                 if value is not None:
-                    canonical.setdefault('longDescription', {})[language] = dict(
-                        source = get_path_source(path),
-                        value = value,
-                        )
-                    break
+                    value = value.strip()
+                    if value:
+                        canonical.setdefault('longDescription', {})[language] = dict(
+                            source = get_path_source(path),
+                            value = value,
+                            )
+                        break
 
         # screenshot
         # The URL of a screenshot displaying the tool user interface
@@ -255,11 +264,13 @@ def main():
                 ):
             value = get_path(entry, path)
             if value is not None:
-                canonical['screenshot'] = dict(
-                    source = get_path_source(path),
-                    value = value,
-                    )
-                break
+                value = value.strip()
+                if value:
+                    canonical['screenshot'] = dict(
+                        source = get_path_source(path),
+                        value = value,
+                        )
+                    break
 
         # sourceCode
         # URL from which the source code of the tool can be obtained.
@@ -271,11 +282,13 @@ def main():
                 ):
             value = get_path(entry, path)
             if value is not None:
-                canonical['sourceCode'] = dict(
-                    source = get_path_source(path),
-                    value = value,
-                    )
-                break
+                value = value.strip()
+                if value:
+                    canonical['sourceCode'] = dict(
+                        source = get_path_source(path),
+                        value = value,
+                        )
+                    break
 
         # stackexchangeTag:
         # Tag from http://stackexchange.org/ uniquely associated with the tool.
@@ -285,31 +298,40 @@ def main():
                 ):
             value = get_path(entry, path)
             if value is not None:
-                canonical['stackexchangeTag'] = dict(
-                    source = get_path_source(path),
-                    value = value,
-                    )
-                break
+                value = value.strip()
+                if value:
+                    canonical['stackexchangeTag'] = dict(
+                        source = get_path_source(path),
+                        value = value,
+                        )
+                    break
 
         # tags
         sources_by_value_by_language = {}
         for path, extractor in (
+                ('civic-tech-field-guide.category', functools.partial(extract_from_value, 'en')),
                 ('civicstack.category', extract_from_civicstack_name_id),
-                ('civicstack.technology', extract_from_civicstack_name_id_list),
+                # ('civicstack.technology', extract_from_civicstack_name_id_list),
                 ('debian_appstream.Categories', functools.partial(extract_from_list, 'en')),
                 ('nuit-debout.Fonction', functools.partial(extract_from_value, 'fr')),
                 ('ogptoolbox-framacalc.Catégorie', functools.partial(extract_from_value, 'fr')),
-                ('ogptoolbox-framacalc.Technologies', functools.partial(extract_from_list, 'fr')),
+                # ('ogptoolbox-framacalc.Technologies', functools.partial(extract_from_list, 'fr')),
                 ('participatedb.Category', functools.partial(extract_from_singletion_or_list, 'en')),
                 ('participatedb.category', functools.partial(extract_from_value, 'en')),
                 ('tech-plateforms.CivicTech or GeneralPurpose', functools.partial(extract_from_value, 'en')),
+                ('tech-plateforms.Functions', functools.partial(extract_from_value, 'en')),
+                ('tech-plateforms.AppCivist Service 1', functools.partial(extract_from_value, 'en')),
+                ('tech-plateforms.AppCivist Service 2', functools.partial(extract_from_value, 'en')),
+                ('tech-plateforms.AppCivist Service 3', functools.partial(extract_from_value, 'en')),
                 ):
             source = get_path_source(path)
             value = get_path(entry, path)
             for language, item in extractor(value):
                 assert isinstance(item, str), (path, language, item, value)
-                if item:
-                    sources_by_value_by_language.setdefault(language, {}).setdefault(item, set()).add(source)
+                if item is not None:
+                    item = item.strip()
+                    if item:
+                        sources_by_value_by_language.setdefault(language, {}).setdefault(item, set()).add(source)
         if sources_by_value_by_language:
             for language, sources_by_value in sources_by_value_by_language.items():
                 canonical.setdefault('tags', {})[language] = [

@@ -120,12 +120,14 @@ def iter_yaml_files(dir):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('source_name', help='source name among the ones known by the merger (mim, udd, debian-apstream, wikidata, civicstack, nuit-debout, participatedb, ogptoolbox-framacalc)')
+    parser.add_argument('source_name', help='source name (among the ones known by this merge tool)')
     parser.add_argument('source_dir', help='path of source data directory')
+    parser.add_argument('target_dir', help='path of target directory for generated YAML files')
+    parser.add_argument('-c', '--create', action='store_true', default=False,
+        help='by default, the script only add information to existing files. With --create, when a program does not' \
+            ' have a file, the user is asked if they want to create the file.')
     parser.add_argument('--specificities-dir', default='./specificities', dest='specificities_dir',
         help='path of directory containing merge particularities in YAML files')
-    parser.add_argument('target_dir', help='path of target directory for generated YAML files')
-    parser.add_argument('-c', '--create', action='store_true', default=False, help='by default, the script only add information to existing files. With --create, when a program does not have a file, the user is asked if they want to create the file.')
     parser.add_argument('-y', '--yes', action='store_true', default=False, help='dont ask for confirmation on creation')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='increase output verbosity')
     global args
@@ -136,14 +138,23 @@ def main():
     if not os.path.exists(args.target_dir):
         os.makedirs(args.target_dir)
 
-    if args.source_name == 'civicstack':
+    if args.source_name == 'civic-tech-field-guide':
+        if args.create:
+            create_dest(args.target_dir, args.source_dir, 'civic-tech-field-guide')
+        merge_source(args.target_dir, args.source_dir, 'civic-tech-field-guide', {
+            'name': 'civic-tech-field-guide',
+            'url': 'https://git.framasoft.org/codegouv/civic-tech-field-guide-yaml',
+            'description': 'http://bit.ly/organizecivictech',
+            })
+
+    elif args.source_name == 'civicstack':
         if args.create:
             create_dest(args.target_dir, args.source_dir, 'civicstack')
         merge_source(args.target_dir, args.source_dir, 'civicstack', {
             'name': 'civicstack',
             'url': 'https://git.framasoft.org/codegouv/civicstack-yaml',
-            'description': 'http://www.civicstack.org/'
-        })
+            'description': 'http://www.civicstack.org/',
+            })
 
     elif args.source_name == 'debian-appstream':
         if args.create:
@@ -151,8 +162,8 @@ def main():
         merge_source(args.target_dir, args.source_dir, 'debian_appstream', {
             'name': 'Debian Appstream',
             'url': 'https://git.framasoft.org/codegouv/appstream-debian-yaml',
-            'description': 'https://wiki.debian.org/AppStream'
-        })
+            'description': 'https://wiki.debian.org/AppStream',
+            })
 
     elif args.source_name == 'mim':
         if args.create:
@@ -165,8 +176,8 @@ def main():
         merge_source(args.target_dir, args.source_dir, 'nuit-debout', {
             'name': 'nuit-debout',
             'url': 'https://git.framasoft.org/codegouv/nuit-debout-yaml',
-            'description': "https://wiki.nuitdebout.fr/wiki/Ressources/Liste_d'outils_numériques"
-        })
+            'description': "https://wiki.nuitdebout.fr/wiki/Ressources/Liste_d'outils_numériques",
+            })
 
     elif args.source_name == 'ogptoolbox-framacalc':
         if args.create:
@@ -174,8 +185,8 @@ def main():
         merge_source(args.target_dir, args.source_dir, 'ogptoolbox-framacalc', {
             'name': 'OGP Toolbox Framacalc',
             'url': 'https://git.framasoft.org/codegouv/ogptoolbox-framacalc-yaml',
-            'description': "https://framacalc.org/ogptoolbox"
-        })
+            'description': "https://framacalc.org/ogptoolbox",
+            })
 
     elif args.source_name == 'participatedb':
         if args.create:
@@ -183,8 +194,8 @@ def main():
         merge_source(args.target_dir, args.source_dir, 'participatedb', {
             'name': 'ParticipateDB',
             'url': 'https://git.framasoft.org/codegouv/participatedb-yaml',
-            'description': "http://www.participatedb.com/"
-        })
+            'description': "http://www.participatedb.com/",
+            })
 
     elif args.source_name == 'tech-plateforms':
         if args.create:
@@ -192,8 +203,8 @@ def main():
         merge_source(args.target_dir, args.source_dir, 'tech-plateforms', {
             'name': 'Tech Plateforms for Civic Participations',
             'url': 'https://git.framasoft.org/codegouv/tech-plateforms-yaml',
-            'description': 'https://docs.google.com/spreadsheets/d/1YBZLdNsGohGBjO5e7yrwOQx78IzCA6SNW6T14p15aKU'
-        })
+            'description': 'https://docs.google.com/spreadsheets/d/1YBZLdNsGohGBjO5e7yrwOQx78IzCA6SNW6T14p15aKU',
+            })
 
     elif args.source_name == 'udd':
         if args.create:
@@ -201,8 +212,8 @@ def main():
         merge_source(args.target_dir, args.source_dir, 'debian', {
             'name': 'Universal Debian Database',
             'url': 'https://git.framasoft.org/codegouv/udd-yaml',
-            'description_url': 'https://wiki.debian.org/UltimateDebianDatabase'
-        }, read_source_data_debian)
+            'description': 'https://wiki.debian.org/UltimateDebianDatabase',
+            }, read_source_data_debian)
 
     elif args.source_name == 'wikidata':
         if args.create:
@@ -210,8 +221,8 @@ def main():
         merge_source(args.target_dir, args.source_dir, 'wikidata', {
             'name': 'Wikidata',
             'url': 'https://git.framasoft.org/codegouv/wikidata-yaml',
-            'description': 'http://wikidata.org/'
-        })
+            'description': 'http://wikidata.org/',
+            })
 
     else:
         print('No valid sources selected: use --help to get more information.')
