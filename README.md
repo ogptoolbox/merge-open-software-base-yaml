@@ -51,7 +51,7 @@ optional arguments:
 This step builds the `canonical` key aggregates data from the various present sources. You need node.js to run this step.
 
 ```bash
-py generate_canonical.js merged-yaml ../open-software-base-yaml
+generate_canonical.py merged-yaml/ ../open-software-base-yaml/
 ```
 
 # Open Sofware Base

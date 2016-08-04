@@ -255,6 +255,29 @@ def main():
                             )
                         break
 
+        # programmingLanguages
+        sources_by_value_by_language = {}
+        for path, extractor in (
+                ('civicstack.technology', extract_from_civicstack_name_id_list),
+                ):
+            source = get_path_source(path)
+            value = get_path(entry, path)
+            for language, item in extractor(value):
+                assert isinstance(item, str), (path, language, item, value)
+                if item is not None:
+                    item = item.strip()
+                    if item:
+                        sources_by_value_by_language.setdefault(language, {}).setdefault(item, set()).add(source)
+        if sources_by_value_by_language:
+            for language, sources_by_value in sources_by_value_by_language.items():
+                canonical.setdefault('programmingLanguages', {})[language] = [
+                    dict(
+                        sources = sorted(sources),
+                        value = value,
+                        )
+                    for value, sources in sorted(sources_by_value.items())
+                    ]
+
         # screenshot
         # The URL of a screenshot displaying the tool user interface
         for path in (
@@ -310,12 +333,11 @@ def main():
         sources_by_value_by_language = {}
         for path, extractor in (
                 ('civic-tech-field-guide.category', functools.partial(extract_from_value, 'en')),
-                ('civicstack.category', extract_from_civicstack_name_id),
-                # ('civicstack.technology', extract_from_civicstack_name_id_list),
+                # ('civicstack.category', extract_from_civicstack_name_id),
+                ('civicstack.tags', extract_from_civicstack_name_id_list),
                 ('debian_appstream.Categories', functools.partial(extract_from_list, 'en')),
                 ('nuit-debout.Fonction', functools.partial(extract_from_value, 'fr')),
                 ('ogptoolbox-framacalc.Catégorie', functools.partial(extract_from_value, 'fr')),
-                # ('ogptoolbox-framacalc.Technologies', functools.partial(extract_from_list, 'fr')),
                 ('participatedb.Category', functools.partial(extract_from_singletion_or_list, 'en')),
                 ('participatedb.category', functools.partial(extract_from_value, 'en')),
                 ('tech-plateforms.CivicTech or GeneralPurpose', functools.partial(extract_from_value, 'en')),
