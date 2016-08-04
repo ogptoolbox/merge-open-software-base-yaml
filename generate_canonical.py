@@ -211,6 +211,7 @@ def main():
                 'tech-plateforms.Name',
                 'nuit-debout.Outil',
                 'participatedb.Name',
+                'harnessing-collaborative-technologies.title',
                 'ogptoolbox-framacalc.Nom',
                 ):
             value = get_path(entry, path)
@@ -232,6 +233,7 @@ def main():
                     'civicstack.description.en',
                     'tech-plateforms.About',
                     'participatedb.Description',
+                    'harnessing-collaborative-technologies.description',
                     ),
                 es = (
                     'debian.description.es.long_description',
@@ -284,6 +286,7 @@ def main():
                 'debian.screenshot.large_image_url',
                 'wikidata.image.0.value',
                 "ogptoolbox-framacalc.Capture d'écran",
+                'harnessing-collaborative-technologies.logo_url',
                 ):
             value = get_path(entry, path)
             if value is not None:
@@ -345,6 +348,7 @@ def main():
                 ('tech-plateforms.AppCivist Service 1', functools.partial(extract_from_value, 'en')),
                 ('tech-plateforms.AppCivist Service 2', functools.partial(extract_from_value, 'en')),
                 ('tech-plateforms.AppCivist Service 3', functools.partial(extract_from_value, 'en')),
+                ('harnessing-collaborative-technologies.category', functools.partial(extract_from_value, 'en')),
                 ):
             source = get_path_source(path)
             value = get_path(entry, path)

@@ -165,6 +165,15 @@ def main():
             'description': 'https://wiki.debian.org/AppStream',
             })
 
+    if args.source_name == 'harnessing-collaborative-technologies':
+        if args.create:
+            create_dest(args.target_dir, args.source_dir, 'harnessing-collaborative-technologies')
+        merge_source(args.target_dir, args.source_dir, 'harnessing-collaborative-technologies', {
+            'name': 'harnessing-collaborative-technologies',
+            'url': 'https://git.framasoft.org/codegouv/harnessing-collaborative-technologies-yaml',
+            'description': 'http://collaboration.grantcraft.org/',
+            })
+
     elif args.source_name == 'mim':
         if args.create:
             create_dest(args.target_dir, args.source_dir, 'mim')
