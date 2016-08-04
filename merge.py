@@ -235,9 +235,12 @@ def merge_source(dest_dir, source_dir, source_name, source_desc, read_source_dat
         read_source_data = read_source_data_default
 
     for data_path, data in iter_yaml_files(dest_dir):
+        # Remove canonical data.
+        data.pop('canonical', None)
+
         name = data['name']
 
-        # find if there is specific name in this source
+        # Find if there is specific name in this source.
         specificity_path = os.path.join(args.specificities_dir, '{}.yaml'.format(name))
         if os.path.exists(specificity_path):
             with open(specificity_path) as specificity_file:
@@ -247,7 +250,7 @@ def merge_source(dest_dir, source_dir, source_name, source_desc, read_source_dat
 
         source_data = read_source_data(source_dir, name)
 
-        # find source file
+        # Find source file.
         if source_data is not None:
             source_data['_source'] = source_desc
             data[source_name] = source_data
