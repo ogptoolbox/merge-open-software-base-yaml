@@ -123,6 +123,46 @@ def main():
     if not os.path.exists(args.target_dir):
         os.makedirs(args.target_dir)
 
+    # ACTORS
+
+    actors_csv_path = os.path.join(args.target_dir, 'actors.csv')
+    entries = []
+    tagsCount = 0
+    for actor_path, actor in iter_yaml_files(os.path.join(args.source_dir, 'actors')):
+        canonical = actor['canonical']
+        tags = [
+            tag['value']
+            for tag in get_path(canonical, 'tags.en', [])
+            ]
+        entries.append(dict(
+            longDescription = get_path(canonical, 'longDescription.en.value'),
+            name = get_path(canonical, 'name.value'),
+            tags = tags,
+            website = get_path(canonical, 'website.value'),
+            ))
+        if len(tags) > tagsCount:
+            tagsCount = len(tags)
+
+    with open(actors_csv_path, 'w') as target_file:
+        csv_writer = csv.writer(target_file)
+        csv_writer.writerow([
+            'Name',
+            'Description',
+            'Website',
+            ] + ['Tag'] * tagsCount)
+        entries.sort(key = lambda entry: entry['name'] or '')
+        for entry in entries:
+            if entry['name'] is None:
+                print('Skipping entry without name: {}'.format(entry))
+                continue
+            tags = entry['tags']
+            row = [
+                entry['name'] or '',
+                entry['longDescription'] or '',
+                entry['website'] or '',
+                ] + tags + [''] * (tagsCount - len(tags))
+            csv_writer.writerow(row)
+
     # PROJECTS
 
     projects_csv_path = os.path.join(args.target_dir, 'projects.csv')

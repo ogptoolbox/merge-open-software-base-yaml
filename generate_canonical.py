@@ -70,7 +70,13 @@ args = None
 log = logging.getLogger(app_name)
 
 
-def extract_from_civicstack_name_id(value):
+def extract_from_list(language, value):
+    if value is not None:
+        for item in value:
+            yield language, item
+
+
+def extract_from_name_id(value):
     if value is not None:
         name = value['name']
         if isinstance(name, str):
@@ -79,16 +85,10 @@ def extract_from_civicstack_name_id(value):
             yield from name.items()
 
 
-def extract_from_civicstack_name_id_list(value):
+def extract_from_name_id_list(value):
     if value is not None:
         for item in value:
-            yield from extract_from_civicstack_name_id(item)
-
-
-def extract_from_list(language, value):
-    if value is not None:
-        for item in value:
-            yield language, item
+            yield from extract_from_name_id(item)
 
 
 def extract_from_singletion_or_list(language, value):
@@ -161,6 +161,100 @@ def main():
     if not os.path.exists(args.target_dir):
         os.makedirs(args.target_dir)
 
+    # ACTORS
+
+    entity_type = 'actors'
+    source_entity_type_dir = os.path.join(args.source_dir, entity_type)
+    target_entity_type_dir = os.path.join(args.target_dir, entity_type)
+    if not os.path.exists(target_entity_type_dir):
+        os.makedirs(target_entity_type_dir)
+    for yaml_file_path, entry in iter_yaml_files(source_entity_type_dir):
+        yaml_file_relative_path = os.path.relpath(yaml_file_path, source_entity_type_dir)
+
+        canonical = collections.OrderedDict()
+
+        # name
+        # Lowercase version of this name is the unique name of the actor and the slugified version of this unique name
+        # is the file name for the actor.
+        for path in (
+                'civic-graph.name',
+                ):
+            value = get_path(entry, path)
+            if value is not None:
+                value = value.strip()
+                if value:
+                    canonical['name'] = dict(
+                        source = get_path_source(path),
+                        value = value,
+                        )
+                    break
+
+        # longDescription
+        # Description of the actor, for each supported language, in a map indexed by the two letter (ISO-639-1)
+        # language code
+        for language, paths in dict(
+                en = (
+                    'civic-graph.description',
+                    ),
+                es = (
+                    ),
+                fr = (
+                    ),
+                ).items():
+            for path in paths:
+                value = get_path(entry, path)
+                if value is not None:
+                    value = value.strip()
+                    if value:
+                        canonical.setdefault('longDescription', {})[language] = dict(
+                            source = get_path_source(path),
+                            value = value,
+                            )
+                        break
+
+        # tags
+        sources_by_value_by_language = {}
+        for path, extractor in (
+                ('civic-graph.categories', extract_from_name_id_list),
+                ('civic-graph.type', functools.partial(extract_from_value, 'en')),
+                ):
+            source = get_path_source(path)
+            value = get_path(entry, path)
+            for language, item in extractor(value):
+                assert isinstance(item, str), (path, language, item, value)
+                if item is not None:
+                    item = item.strip()
+                    if item:
+                        sources_by_value_by_language.setdefault(language, {}).setdefault(item, set()).add(source)
+        if sources_by_value_by_language:
+            for language, sources_by_value in sources_by_value_by_language.items():
+                canonical.setdefault('tags', {})[language] = [
+                    dict(
+                        sources = sorted(sources),
+                        value = value,
+                        )
+                    for value, sources in sorted(sources_by_value.items())
+                    ]
+
+        # website
+        for path in (
+                'civic-graph.url',
+                ):
+            value = get_path(entry, path)
+            if value is not None:
+                value = value.strip()
+                if value:
+                    canonical['website'] = dict(
+                        source = get_path_source(path),
+                        value = value,
+                        )
+                    break
+
+        if canonical:
+            entry['canonical'] = canonical
+        with open(os.path.join(target_entity_type_dir, yaml_file_relative_path), 'w') as yaml_file:
+            yaml.dump(entry, yaml_file, allow_unicode=True, default_flow_style=False, indent=2, width=120)
+
     # PROJECTS
 
     entity_type = 'projects'
@@ -174,8 +268,8 @@ def main():
         canonical = collections.OrderedDict()
 
         # name
-        # Lowercase version of this name is the unique name of the tool and the slugified version of this unique name is
-        # the file name for the tool.
+        # Lowercase version of this name is the unique name of the project and the slugified version of this unique name
+        # is the file name for the project.
         for path in (
                 'participatedb.Name',
                 ):
@@ -383,7 +477,7 @@ def main():
         # programmingLanguages
         sources_by_value = {}
         for path, extractor in (
-                ('civicstack.technology', extract_from_civicstack_name_id_list),
+                ('civicstack.technology', extract_from_name_id_list),
                 ):
             source = get_path_source(path)
             value = get_path(entry, path)
@@ -458,8 +552,8 @@ def main():
         sources_by_value_by_language = {}
         for path, extractor in (
                 ('civic-tech-field-guide.category', functools.partial(extract_from_value, 'en')),
-                # ('civicstack.category', extract_from_civicstack_name_id),
-                ('civicstack.tags', extract_from_civicstack_name_id_list),
+                # ('civicstack.category', extract_from_name_id),
+                ('civicstack.tags', extract_from_name_id_list),
                 ('debian_appstream.Categories', functools.partial(extract_from_list, 'en')),
                 ('nuit-debout.Fonction', functools.partial(extract_from_value, 'fr')),
                 ('ogptoolbox-framacalc.Catégorie', functools.partial(extract_from_value, 'fr')),

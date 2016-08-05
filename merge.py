@@ -193,6 +193,13 @@ debian_stable_release_name = 'jessie'
 log = logging.getLogger(app_name)
 source_config_by_name = {
     # Sources that are allowed to create new entities
+    'civic-graph': dict(
+        actors_iter = make_yaml_dir_iter(),
+        data_repository_url = 'https://git.framasoft.org/codegouv/civic-graph-yaml',
+        dir = 'civic-graph-yaml',
+        name = 'Civic Graph',
+        source_url = 'http://civicgraph.io/',
+        ),
     'civic-tech-field-guide': dict(
         data_repository_url = 'https://git.framasoft.org/codegouv/civic-tech-field-guide-yaml',
         dir = 'civic-tech-field-guide-yaml',
@@ -368,6 +375,7 @@ def main():
                 with open(entity_path, 'w') as entity_file:
                     yaml.dump(entity, entity_file, allow_unicode=True, default_flow_style=False, indent=2, width=120)
     # else:
+    #     TODO
     #     source_config = source_config_by_name[args.source_name]
     #     if not source_config.get('disabled', False):
     #         update_only = source_config.get('update_only', False)
