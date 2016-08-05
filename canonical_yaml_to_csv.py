@@ -113,16 +113,71 @@ def iter_yaml_files(dir):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('source_dir', help='path of YAML data directory')
-    parser.add_argument('target_path', help='name of generated CSV file')
+    parser.add_argument('target_dir', help='name of directory containing generated CSV file')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='increase output verbosity')
     global args
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING, stream=sys.stdout)
 
+    if not os.path.exists(args.target_dir):
+        os.makedirs(args.target_dir)
+
+    # PROJECTS
+
+    projects_csv_path = os.path.join(args.target_dir, 'projects.csv')
     entries = []
     tagsCount = 0
-    for tool_path, tool in iter_yaml_files(args.source_dir):
+    toolsCount = 0
+    for project_path, project in iter_yaml_files(os.path.join(args.source_dir, 'projects')):
+        canonical = project['canonical']
+        tags = [
+            tag['value']
+            for tag in get_path(canonical, 'tags.en', [])
+            ]
+        tools = [
+            tool['value']
+            for tool in get_path(canonical, 'tools', [])
+            ]
+        entries.append(dict(
+            longDescription = get_path(canonical, 'longDescription.en.value'),
+            name = get_path(canonical, 'name.value'),
+            tags = tags,
+            tools = tools,
+            website = get_path(canonical, 'website.value'),
+            ))
+        if len(tags) > tagsCount:
+            tagsCount = len(tags)
+        if len(tools) > toolsCount:
+            toolsCount = len(tools)
+
+    with open(projects_csv_path, 'w') as target_file:
+        csv_writer = csv.writer(target_file)
+        csv_writer.writerow([
+            'Name',
+            'Description',
+            'Website',
+            ] + ['Tag'] * tagsCount + ['Tool'] * toolsCount)
+        entries.sort(key = lambda entry: entry['name'] or '')
+        for entry in entries:
+            if entry['name'] is None:
+                print('Skipping entry without name: {}'.format(entry))
+                continue
+            tags = entry['tags']
+            tools = entry['tools']
+            row = [
+                entry['name'] or '',
+                entry['longDescription'] or '',
+                entry['website'] or '',
+                ] + tags + [''] * (tagsCount - len(tags)) + tools + [''] * (toolsCount - len(tools))
+            csv_writer.writerow(row)
+
+    # TOOLS
+
+    tools_csv_path = os.path.join(args.target_dir, 'tools.csv')
+    entries = []
+    tagsCount = 0
+    for tool_path, tool in iter_yaml_files(os.path.join(args.source_dir, 'tools')):
         canonical = tool['canonical']
         tags = [
             tag['value']
@@ -141,7 +196,7 @@ def main():
         if len(tags) > tagsCount:
             tagsCount = len(tags)
 
-    with open(args.target_path, 'w') as target_file:
+    with open(tools_csv_path, 'w') as target_file:
         csv_writer = csv.writer(target_file)
         csv_writer.writerow([
             'Name',

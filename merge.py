@@ -60,251 +60,61 @@ yaml.add_representer(collections.OrderedDict, dict_representer)
 yaml.add_representer(str, lambda dumper, data: dumper.represent_scalar(u'tag:yaml.org,2002:str', data))
 
 
-#
+# YAML directories iterators
 
 
-app_name = os.path.splitext(os.path.basename(__file__))[0]
-args = None
-debian_stable_release_name = 'jessie'
-log = logging.getLogger(app_name)
-
-
-def create_dest(dest_dir, source_dir, source_name):
-    for source_data_path, source_data in iter_yaml_files(source_dir):
-        name = os.path.splitext(os.path.basename(source_data_path))[0]
-
-        specificity_path = os.path.join(args.specificities_dir, '{}.yaml'.format(name))
-        if os.path.exists(specificity_path):
-            with open(specificity_path) as specificity_file:
-                name = yaml.load(specificity_file).get(source_name, {'name': name}).get('name')
-
-        data_path = os.path.join(dest_dir, '{}.yaml'.format(name))
-
-        if not os.path.exists(data_path):
-            if not args.yes:
-                print("\n")
-                print(yaml.dump(source_data))
-                msg = 'File for ' + name + ' does not exist. Create it ? '
-            if args.yes or input("%s (y/N) " % msg).lower() == 'y':
-                with open(data_path, 'w') as new_file:
-                    data = {'name': name}
-                    yaml.dump(data, new_file, allow_unicode=True, default_flow_style=False, indent=2, width=120)
-
-
-def extract_latest_debian_screenshot(*screenshots):
-    latest_number = -1
-    latest_screenshot = None
-    for screenshot in screenshots:
-        if screenshot is None:
-            continue
-        number = int(screenshot['large_image_url'].rsplit('/', 1)[-1].split('_', 1)[0])
-        if number > latest_number:
-            latest_number = number
-            latest_screenshot = screenshot
-    return latest_screenshot
-
-
-def iter_yaml_files(dir):
+def iter_udd_yaml_dir(dir, canonical_name_by_name, entity_by_canonical_name, update_only):
     assert os.path.exists(dir), "Directory doesn't exist: {}".format(dir)
-    for sub_dir, dirs_name, filenames in os.walk(dir):
-        for dir_name in dirs_name[:]:
-            if dir_name.startswith('.'):
-                dirs_name.remove(dir_name)
-        for filename in filenames:
-            if not filename.endswith(".yaml"):
-                continue
-            yaml_file_path = os.path.join(sub_dir, filename)
-            with open(yaml_file_path) as yaml_file:
-                yield yaml_file_path, yaml.load(yaml_file)
 
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('source_name', help='source name (among the ones known by this merge tool)')
-    parser.add_argument('source_dir', help='path of source data directory')
-    parser.add_argument('target_dir', help='path of target directory for generated YAML files')
-    parser.add_argument('-c', '--create', action='store_true', default=False,
-        help='by default, the script only add information to existing files. With --create, when a program does not' \
-            ' have a file, the user is asked if they want to create the file.')
-    parser.add_argument('--specificities-dir', default='./specificities', dest='specificities_dir',
-        help='path of directory containing merge particularities in YAML files')
-    parser.add_argument('-y', '--yes', action='store_true', default=False, help='dont ask for confirmation on creation')
-    parser.add_argument('-v', '--verbose', action='store_true', default=False, help='increase output verbosity')
-    global args
-    args = parser.parse_args()
-
-    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING, stream=sys.stdout)
-
-    if not os.path.exists(args.target_dir):
-        os.makedirs(args.target_dir)
-
-    if args.source_name == 'civic-tech-field-guide':
-        if args.create:
-            create_dest(args.target_dir, args.source_dir, 'civic-tech-field-guide')
-        merge_source(args.target_dir, args.source_dir, 'civic-tech-field-guide', {
-            'name': 'civic-tech-field-guide',
-            'url': 'https://git.framasoft.org/codegouv/civic-tech-field-guide-yaml',
-            'description': 'http://bit.ly/organizecivictech',
-            })
-
-    elif args.source_name == 'civicstack':
-        if args.create:
-            create_dest(args.target_dir, args.source_dir, 'civicstack')
-        merge_source(args.target_dir, args.source_dir, 'civicstack', {
-            'name': 'civicstack',
-            'url': 'https://git.framasoft.org/codegouv/civicstack-yaml',
-            'description': 'http://www.civicstack.org/',
-            })
-
-    elif args.source_name == 'debian-appstream':
-        if args.create:
-            create_dest(args.target_dir, args.source_dir, 'debian_appstream')
-        merge_source(args.target_dir, args.source_dir, 'debian_appstream', {
-            'name': 'Debian Appstream',
-            'url': 'https://git.framasoft.org/codegouv/appstream-debian-yaml',
-            'description': 'https://wiki.debian.org/AppStream',
-            })
-
-    if args.source_name == 'harnessing-collaborative-technologies':
-        if args.create:
-            create_dest(args.target_dir, args.source_dir, 'harnessing-collaborative-technologies')
-        merge_source(args.target_dir, args.source_dir, 'harnessing-collaborative-technologies', {
-            'name': 'harnessing-collaborative-technologies',
-            'url': 'https://git.framasoft.org/codegouv/harnessing-collaborative-technologies-yaml',
-            'description': 'http://collaboration.grantcraft.org/',
-            })
-
-    elif args.source_name == 'mim':
-        if args.create:
-            create_dest(args.target_dir, args.source_dir, 'mim')
-        print('Merging from mim not implemented.')
-
-    elif args.source_name == 'nuit-debout':
-        if args.create:
-            create_dest(args.target_dir, args.source_dir, 'nuit-debout')
-        merge_source(args.target_dir, args.source_dir, 'nuit-debout', {
-            'name': 'nuit-debout',
-            'url': 'https://git.framasoft.org/codegouv/nuit-debout-yaml',
-            'description': "https://wiki.nuitdebout.fr/wiki/Ressources/Liste_d'outils_numériques",
-            })
-
-    elif args.source_name == 'ogptoolbox-framacalc':
-        if args.create:
-            create_dest(args.target_dir, args.source_dir, 'ogptoolbox-framacalc')
-        merge_source(args.target_dir, args.source_dir, 'ogptoolbox-framacalc', {
-            'name': 'OGP Toolbox Framacalc',
-            'url': 'https://git.framasoft.org/codegouv/ogptoolbox-framacalc-yaml',
-            'description': "https://framacalc.org/ogptoolbox",
-            })
-
-    elif args.source_name == 'participatedb':
-        if args.create:
-            create_dest(args.target_dir, args.source_dir, 'participatedb')
-        merge_source(args.target_dir, args.source_dir, 'participatedb', {
-            'name': 'ParticipateDB',
-            'url': 'https://git.framasoft.org/codegouv/participatedb-yaml',
-            'description': "http://www.participatedb.com/",
-            })
-
-    elif args.source_name == 'tech-plateforms':
-        if args.create:
-            create_dest(args.target_dir, args.source_dir, 'tech-plateforms')
-        merge_source(args.target_dir, args.source_dir, 'tech-plateforms', {
-            'name': 'Tech Plateforms for Civic Participations',
-            'url': 'https://git.framasoft.org/codegouv/tech-plateforms-yaml',
-            'description': 'https://docs.google.com/spreadsheets/d/1YBZLdNsGohGBjO5e7yrwOQx78IzCA6SNW6T14p15aKU',
-            })
-
-    elif args.source_name == 'udd':
-        if args.create:
-            print('Creating from Debian UDD not implemented.')
-        merge_source(args.target_dir, args.source_dir, 'debian', {
-            'name': 'Universal Debian Database',
-            'url': 'https://git.framasoft.org/codegouv/udd-yaml',
-            'description': 'https://wiki.debian.org/UltimateDebianDatabase',
-            }, read_source_data_debian)
-
-    elif args.source_name == 'wikidata':
-        if args.create:
-            print('Creating from Wikidata not implemented.')
-        merge_source(args.target_dir, args.source_dir, 'wikidata', {
-            'name': 'Wikidata',
-            'url': 'https://git.framasoft.org/codegouv/wikidata-yaml',
-            'description': 'http://wikidata.org/',
-            })
-
-    else:
-        print('No valid sources selected: use --help to get more information.')
-
-    return 0
-
-
-def merge_source(dest_dir, source_dir, source_name, source_desc, read_source_data=None):
-    if read_source_data is None:
-        read_source_data = read_source_data_default
-
-    for data_path, data in iter_yaml_files(dest_dir):
-        # Remove canonical data.
-        data.pop('canonical', None)
-
-        name = data['name']
-
-        # Find if there is specific name in this source.
-        specificity_path = os.path.join(args.specificities_dir, '{}.yaml'.format(name))
-        if os.path.exists(specificity_path):
-            with open(specificity_path) as specificity_file:
-                alt_name = yaml.load(specificity_file).get(source_name, {'name': name}).get('name')
-                print('Using ' + alt_name + ' instead of ' + name + ' in source ' + source_name)
-                name = alt_name
-
-        source_data = read_source_data(source_dir, name)
-
-        # Find source file.
-        if source_data is not None:
-            source_data['_source'] = source_desc
-            data[source_name] = source_data
-            with open(data_path, 'w') as yaml_file:
-                yaml.dump(data, yaml_file, allow_unicode=True, default_flow_style=False, indent=2, width=120)
-        else:
-            print(name + ' not found in source ' + source_name + ': skipping.')
-
-
-def read_source_data_debian(source_dir, debian_name):
     apt_pkg.init()
 
-    debian_package_path = os.path.join(
-        source_dir,
-        'packages',
-        debian_name[:4] if debian_name.startswith('lib') else debian_name[0],
-        '{}.yaml'.format(debian_name)
-    )
-    if os.path.exists(debian_package_path):
-        with open(debian_package_path) as debian_package_file:
-            debian_package = yaml.load(debian_package_file)
-    else:
-        debian_package = None
+    tools_name = set()
+    for part in ('packages', 'sources'):
+        for sub_dir, dirs_name, filenames in os.walk(os.path.join(dir, part)):
+            for dir_name in dirs_name[:]:
+                if dir_name.startswith('.'):
+                    dirs_name.remove(dir_name)
+            for filename in filenames:
+                if not filename.endswith(".yaml"):
+                    continue
+                name = os.path.splitext(filename)[0]
+                tools_name.add(name)
 
-    debian_source_path = os.path.join(
-        source_dir,
-        'sources',
-        debian_name[:4] if debian_name.startswith('lib') else debian_name[0],
-        '{}.yaml'.format(debian_name)
-    )
-    if os.path.exists(debian_source_path):
-        with open(debian_source_path) as debian_source_file:
-            debian_source = yaml.load(debian_source_file)
-    else:
-        debian_source = None
+    for name in tools_name:
+        canonical_name = canonical_name_by_name.get(name, name)
+        entity = entity_by_canonical_name.get(canonical_name)
+        if entity is None and update_only:
+            continue
 
-    if debian_package is None and debian_source is None:
-        debian = None
-    else:
+        package_path = os.path.join(
+            dir,
+            'packages',
+            name[:4] if name.startswith('lib') else name[0],
+            '{}.yaml'.format(name),
+            )
+        if os.path.exists(package_path):
+            with open(package_path) as package_file:
+                package = yaml.load(package_file)
+        else:
+            package = None
+
+        source_path = os.path.join(
+            dir,
+            'sources',
+            name[:4] if name.startswith('lib') else name[0],
+            '{}.yaml'.format(name)
+            )
+        if os.path.exists(source_path):
+            with open(source_path) as source_file:
+                source = yaml.load(source_file)
+        else:
+            source = None
+
         debian = collections.OrderedDict()
-        debian['name'] = debian_name
-
-        if debian_package is not None:
+        debian['name'] = name
+        if package is not None:
             descriptions_by_architecture = {}
-            release_by_name = debian_package.get('releases', {})
+            release_by_name = package.get('releases', {})
             release = release_by_name.get(debian_stable_release_name)
             releases = release_by_name.values() if release is None else [release]
             for release in releases:
@@ -322,19 +132,18 @@ def read_source_data_debian(source_dir, debian_name):
                         descriptions = component.get('descriptions', {}).get(description_md5)
                         if descriptions is not None:
                             descriptions_by_architecture[architecture] = descriptions
-            assert descriptions_by_architecture, debian_name
             if descriptions_by_architecture:
                 debian['description'] = descriptions_by_architecture.get('all') or \
                     descriptions_by_architecture.get('amd64') or list(descriptions_by_architecture.values())[0]
 
-            screenshots = debian_package.get('screenshots')
+            screenshots = package.get('screenshots')
             screenshot = extract_latest_debian_screenshot(*screenshots) if screenshots is not None else None
-            versions = debian_package.get('versions')
+            versions = package.get('versions')
             if versions is not None:
                 for version in versions.values():
                     screenshots = version.get('screenshots')
                     if screenshots is not None:
-                        screenshot = extract_latest_debian_screenshot(screenshot, *screenshots)
+                        screenshot = extract_latest_screenshot(screenshot, *screenshots)
             if screenshot:
                 debian['screenshot'] = collections.OrderedDict([
                     ('large_image_url', screenshot['large_image_url']),
@@ -342,29 +151,241 @@ def read_source_data_debian(source_dir, debian_name):
                     ('small_image_url', screenshot['small_image_url']),
                 ])
 
-        if debian_source is not None:
-            security_issues = debian_source.get('security_issues')
+        if source is not None:
+            security_issues = source.get('security_issues')
             if security_issues:
                 debian['security_issues'] = security_issues
 
-    if debian:
-        return debian
+        if not debian:
+            continue
+        yield canonical_name, debian
 
-    return None
+
+def make_yaml_dir_iter(entity_relative_dir=None):
+    def iter_yaml_dir(dir, canonical_name_by_name, entity_by_canonical_name, update_only):
+        if entity_relative_dir is not None:
+            dir = os.path.join(dir, entity_relative_dir)
+        assert os.path.exists(dir), "Directory doesn't exist: {}".format(dir)
+        for sub_dir, dirs_name, filenames in os.walk(dir):
+            for dir_name in dirs_name[:]:
+                if dir_name.startswith('.'):
+                    dirs_name.remove(dir_name)
+            for filename in filenames:
+                if not filename.endswith(".yaml"):
+                    continue
+                name = os.path.splitext(filename)[0]
+                canonical_name = canonical_name_by_name.get(name, name)
+                entity = entity_by_canonical_name.get(canonical_name)
+                if entity is None and update_only:
+                    continue
+                yaml_path = os.path.join(sub_dir, filename)
+                with open(yaml_path) as yaml_file:
+                    yield canonical_name, yaml.load(yaml_file)
+    return iter_yaml_dir
 
 
-def read_source_data_default(source_dir, name):
-    source_path = os.path.join(source_dir, '{}.yaml'.format(name))
-    source_path_alt = os.path.join(source_dir, name[0], '{}.yaml'.format(name))
+#
 
-    if os.path.exists(source_path):
-        with open(source_path) as source_file:
-            return yaml.load(source_file)
-    elif os.path.exists(source_path_alt):
-        with open(source_path_alt) as source_file:
-            return yaml.load(source_file)
-    else:
-        return None
+
+app_name = os.path.splitext(os.path.basename(__file__))[0]
+args = None
+debian_stable_release_name = 'jessie'
+log = logging.getLogger(app_name)
+source_config_by_name = {
+    # Sources that are allowed to create new entities
+    'civic-tech-field-guide': dict(
+        data_repository_url = 'https://git.framasoft.org/codegouv/civic-tech-field-guide-yaml',
+        dir = 'civic-tech-field-guide-yaml',
+        name = 'Civic Tech Field Guide',
+        source_url = 'http://bit.ly/organizecivictech',
+        tools_iter = make_yaml_dir_iter(),
+        ),
+    'civicstack': dict(
+        data_repository_url = 'https://git.framasoft.org/codegouv/civicstack-yaml',
+        dir = 'civicstack-yaml',
+        name = 'CivicStack',
+        source_url = 'http://www.civicstack.org/',
+        tools_iter = make_yaml_dir_iter(),
+        ),
+    'harnessing-collaborative-technologies': dict(
+        data_repository_url = 'https://git.framasoft.org/codegouv/harnessing-collaborative-technologies-yaml',
+        dir = 'harnessing-collaborative-technologies-yaml',
+        name = 'Harnessing Collaborative Technologies report',
+        source_url = 'http://collaboration.grantcraft.org/',
+        tools_iter = make_yaml_dir_iter(),
+        ),
+    'mim': dict(
+        disabled = True,
+        data_repository_url = 'TODO',
+        dir = 'TODO',
+        name = 'TODO',
+        source_url = 'http://pcll.ac-dijon.fr/mim/',
+        tools_iter = make_yaml_dir_iter(),
+        ),
+    'nuit-debout': dict(
+        data_repository_url = 'https://git.framasoft.org/codegouv/nuit-debout-yaml',
+        dir = 'nuit-debout-yaml',
+        name = 'Nuit Debout',
+        source_url = "https://wiki.nuitdebout.fr/wiki/Ressources/Liste_d'outils_numériques",
+        tools_iter = make_yaml_dir_iter(),
+        ),
+    'ogptoolbox-framacalc': dict(
+        data_repository_url = 'https://git.framasoft.org/codegouv/ogptoolbox-framacalc-yaml',
+        dir = 'ogptoolbox-framacalc-yaml',
+        name = 'OGP Toolbox Framacalc',
+        source_url = 'https://framacalc.org/ogptoolbox',
+        tools_iter = make_yaml_dir_iter(),
+        ),
+    'participatedb': dict(
+        data_repository_url = 'https://git.framasoft.org/codegouv/participatedb-yaml',
+        dir = 'participatedb-yaml',
+        name = 'ParticipateDB',
+        projects_iter = make_yaml_dir_iter('projects'),
+        source_url = 'http://www.participatedb.com/',
+        tools_iter = make_yaml_dir_iter('tools'),
+        ),
+    'tech-plateforms': dict(
+        data_repository_url = 'https://git.framasoft.org/codegouv/tech-plateforms-yaml',
+        dir = 'tech-plateforms-yaml',
+        name = 'Tech Plateforms for Civic Participations',
+        source_url = 'https://docs.google.com/spreadsheets/d/1YBZLdNsGohGBjO5e7yrwOQx78IzCA6SNW6T14p15aKU',
+        tools_iter = make_yaml_dir_iter(),
+        ),
+    
+    # Sources that are not allowed to create new entities (update_only)
+    'debian-appstream': dict(
+        data_repository_url = 'https://git.framasoft.org/codegouv/appstream-debian-yaml',
+        dir = 'appstream-debian-yaml',
+        name = 'Debian Appstream',
+        source_url = 'https://wiki.debian.org/AppStream',
+        tools_iter = make_yaml_dir_iter(),
+        update_only = True,
+        ),
+    'udd': dict(
+        data_repository_url = 'https://git.framasoft.org/codegouv/udd-yaml',
+        dir = 'udd-yaml',
+        name = 'Universal Debian Database',
+        source_url = 'https://wiki.debian.org/UltimateDebianDatabase',
+        tools_iter = iter_udd_yaml_dir,
+        update_only = True,
+        ),
+    'wikidata': dict(
+        data_repository_url = 'https://git.framasoft.org/codegouv/wikidata-yaml',
+        dir = 'wikidata-yaml',
+        name = 'WikiData',
+        source_url = 'http://wikidata.org/',
+        tools_iter = make_yaml_dir_iter(),
+        update_only = True,
+        ),
+    }
+sources_name = sorted(source_config_by_name.keys())
+
+
+def extract_latest_debian_screenshot(*screenshots):
+    latest_number = -1
+    latest_screenshot = None
+    for screenshot in screenshots:
+        if screenshot is None:
+            continue
+        number = int(screenshot['large_image_url'].rsplit('/', 1)[-1].split('_', 1)[0])
+        if number > latest_number:
+            latest_number = number
+            latest_screenshot = screenshot
+    return latest_screenshot
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('source_name', choices=['all'] + sources_name, help='source name ("all" to merge all sources)')
+    parser.add_argument('source_dir', help='path of directory containing source data directories')
+    parser.add_argument('target_dir', help='path of target directory for generated YAML files')
+    parser.add_argument('--specificities-dir', default='./specificities', dest='specificities_dir',
+        help='path of directory containing merge particularities in YAML files')
+    parser.add_argument('-v', '--verbose', action='store_true', default=False, help='increase output verbosity')
+    global args
+    args = parser.parse_args()
+
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING, stream=sys.stdout)
+
+    assert os.path.exists(args.source_dir)
+    if not os.path.exists(args.target_dir):
+        os.makedirs(args.target_dir)
+
+    canonical_name_by_name_by_source = {}
+    for filename in os.listdir(args.specificities_dir):
+        if not filename.endswith(".yaml"):
+            continue
+        canonical_name = os.path.splitext(filename)[0]
+        yaml_path = os.path.join(args.specificities_dir, filename)
+        with open(yaml_path) as yaml_file:
+            specificities = yaml.load(yaml_file)
+            for source_name, source_specificities in specificities.items():
+                if source_specificities is None:
+                    continue
+                assert source_name in sources_name, 'Invalid source "{}" in specificities file "{}"'.format(
+                    source_name, yaml_path)
+                name = source_specificities.get('name')
+                if name:
+                    canonical_name_by_name_by_source.setdefault(source_name, {})[name] = canonical_name
+
+    if args.source_name == 'all':
+        entity_by_canonical_name_by_type = {}
+        for source_name, source_config in sorted(source_config_by_name.items(),
+                key = lambda name_config_couple: name_config_couple[1].get('update_only', False)):
+            if source_config.get('disabled', False):
+                print('Skipping disabled source {}.'.format(source_name))
+                continue
+            print('Merging source {}...'.format(source_name))
+            canonical_name_by_name = canonical_name_by_name_by_source.get(source_name, {})
+            update_only = source_config.get('update_only', False)
+            for entity_type in ('actors', 'projects', 'tools'):
+                entities_iter = source_config.get('{}_iter'.format(entity_type))
+                if entities_iter is None:
+                    continue
+                entity_by_canonical_name = entity_by_canonical_name_by_type.setdefault(entity_type, {}) 
+                for canonical_name, source_entity in entities_iter(
+                        os.path.join(args.source_dir, source_config['dir']),
+                        canonical_name_by_name,
+                        entity_by_canonical_name,
+                        update_only,
+                        ):
+                    source_entity['_source'] = dict(
+                        data_repository_url = source_config['data_repository_url'],
+                        name = source_config['name'],
+                        source_url = source_config['source_url'],
+                        )
+                    entity = entity_by_canonical_name.get(canonical_name)
+                    if entity is None:
+                        entity_by_canonical_name[canonical_name] = entity = {}
+                    entity[source_name] = source_entity
+
+        for entity_type, entity_by_canonical_name in entity_by_canonical_name_by_type.items():
+            type_dir = os.path.join(args.target_dir, entity_type)
+            if not os.path.exists(type_dir):
+                os.makedirs(type_dir)
+            for canonical_name, entity in entity_by_canonical_name.items():
+                entity_path = os.path.join(type_dir, '{}.yaml'.format(canonical_name))
+                with open(entity_path, 'w') as entity_file:
+                    yaml.dump(entity, entity_file, allow_unicode=True, default_flow_style=False, indent=2, width=120)
+    # else:
+    #     source_config = source_config_by_name[args.source_name]
+    #     if not source_config.get('disabled', False):
+    #         update_only = source_config.get('update_only', False)
+    #     entity_by_canonical_name_by_type = {}
+    #     for entity_type in os.listdir(args.target_dir):
+    #         if entity_type.startswith('.'):
+    #             continue
+    #         entity_by_canonical_name = entity_by_canonical_name_by_type.setdefault(entity_type, {})
+    #         for filename in os.listdir(os.path.join(args.source_name, entity_type)):
+    #             if not filename.endsswith('.yaml'):
+    #                 continue
+    #             canonical_name = os.path.splitext(filename)[0]
+    #             with open(os.path.join(os.path.join(args.source_name, entity_type, filename))) as entity_file:
+    #                 entity = yaml.load(entity_file)
+    #             with open()
+    #             entity_by_canonical_name[canonical_name] = yaml.load(yaml_file)
+
+    return 0
 
 
 if __name__ == "__main__":

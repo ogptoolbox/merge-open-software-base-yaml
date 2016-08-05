@@ -161,8 +161,131 @@ def main():
     if not os.path.exists(args.target_dir):
         os.makedirs(args.target_dir)
 
-    for yaml_file_path, entry in iter_yaml_files(args.source_dir):
-        yaml_file_relative_path = os.path.relpath(yaml_file_path, args.source_dir)
+    # PROJECTS
+
+    entity_type = 'projects'
+    source_entity_type_dir = os.path.join(args.source_dir, entity_type)
+    target_entity_type_dir = os.path.join(args.target_dir, entity_type)
+    if not os.path.exists(target_entity_type_dir):
+        os.makedirs(target_entity_type_dir)
+    for yaml_file_path, entry in iter_yaml_files(source_entity_type_dir):
+        yaml_file_relative_path = os.path.relpath(yaml_file_path, source_entity_type_dir)
+
+        canonical = collections.OrderedDict()
+
+        # name
+        # Lowercase version of this name is the unique name of the tool and the slugified version of this unique name is
+        # the file name for the tool.
+        for path in (
+                'participatedb.Name',
+                ):
+            value = get_path(entry, path)
+            if value is not None:
+                value = value.strip()
+                if value:
+                    canonical['name'] = dict(
+                        source = get_path_source(path),
+                        value = value,
+                        )
+                    break
+
+        # longDescription
+        # Description of the project, for each supported language, in a map indexed by the two letter (ISO-639-1)
+        # language code
+        for language, paths in dict(
+                en = (
+                    'participatedb.Description',
+                    ),
+                es = (
+                    ),
+                fr = (
+                    ),
+                ).items():
+            for path in paths:
+                value = get_path(entry, path)
+                if value is not None:
+                    value = value.strip()
+                    if value:
+                        canonical.setdefault('longDescription', {})[language] = dict(
+                            source = get_path_source(path),
+                            value = value,
+                            )
+                        break
+
+        # tags
+        sources_by_value_by_language = {}
+        for path, extractor in (
+                ('participatedb.Category', functools.partial(extract_from_singletion_or_list, 'en')),
+                ('participatedb.category', functools.partial(extract_from_value, 'en')),
+                ):
+            source = get_path_source(path)
+            value = get_path(entry, path)
+            for language, item in extractor(value):
+                assert isinstance(item, str), (path, language, item, value)
+                if item is not None:
+                    item = item.strip()
+                    if item:
+                        sources_by_value_by_language.setdefault(language, {}).setdefault(item, set()).add(source)
+        if sources_by_value_by_language:
+            for language, sources_by_value in sources_by_value_by_language.items():
+                canonical.setdefault('tags', {})[language] = [
+                    dict(
+                        sources = sorted(sources),
+                        value = value,
+                        )
+                    for value, sources in sorted(sources_by_value.items())
+                    ]
+
+        # tools
+        sources_by_value = {}
+        for path, extractor in (
+                ('participatedb.Tools used', functools.partial(extract_from_list, None)),
+                ):
+            source = get_path_source(path)
+            value = get_path(entry, path)
+            for language, item in extractor(value):
+                assert isinstance(item, str), (path, language, item, value)
+                if item is not None:
+                    item = item.strip()
+                    if item:
+                        sources_by_value.setdefault(item, set()).add(source)
+        if sources_by_value:
+            canonical['tools'] = [
+                dict(
+                    sources = sorted(sources),
+                    value = value,
+                    )
+                for value, sources in sorted(sources_by_value.items())
+                ]
+
+        # website
+        for path in (
+                'participatedb.Web',
+                ):
+            value = get_path(entry, path)
+            if value is not None:
+                value = value.strip()
+                if value:
+                    canonical['website'] = dict(
+                        source = get_path_source(path),
+                        value = value,
+                        )
+                    break
+
+        if canonical:
+            entry['canonical'] = canonical
+        with open(os.path.join(target_entity_type_dir, yaml_file_relative_path), 'w') as yaml_file:
+            yaml.dump(entry, yaml_file, allow_unicode=True, default_flow_style=False, indent=2, width=120)
+
+    # TOOLS
+
+    entity_type = 'tools'
+    source_entity_type_dir = os.path.join(args.source_dir, entity_type)
+    target_entity_type_dir = os.path.join(args.target_dir, entity_type)
+    if not os.path.exists(target_entity_type_dir):
+        os.makedirs(target_entity_type_dir)
+    for yaml_file_path, entry in iter_yaml_files(source_entity_type_dir):
+        yaml_file_relative_path = os.path.relpath(yaml_file_path, source_entity_type_dir)
 
         canonical = collections.OrderedDict()
 
@@ -258,7 +381,7 @@ def main():
                         break
 
         # programmingLanguages
-        sources_by_value_by_language = {}
+        sources_by_value = {}
         for path, extractor in (
                 ('civicstack.technology', extract_from_civicstack_name_id_list),
                 ):
@@ -269,16 +392,15 @@ def main():
                 if item is not None:
                     item = item.strip()
                     if item:
-                        sources_by_value_by_language.setdefault(language, {}).setdefault(item, set()).add(source)
-        if sources_by_value_by_language:
-            for language, sources_by_value in sources_by_value_by_language.items():
-                canonical.setdefault('programmingLanguages', {})[language] = [
-                    dict(
-                        sources = sorted(sources),
-                        value = value,
-                        )
-                    for value, sources in sorted(sources_by_value.items())
-                    ]
+                        sources_by_value.setdefault(item, set()).add(source)
+        if sources_by_value:
+            canonical['programmingLanguages'] = [
+                dict(
+                    sources = sorted(sources),
+                    value = value,
+                    )
+                for value, sources in sorted(sources_by_value.items())
+                ]
 
         # screenshot
         # The URL of a screenshot displaying the tool user interface
@@ -370,7 +492,7 @@ def main():
 
         if canonical:
             entry['canonical'] = canonical
-        with open(os.path.join(args.target_dir, yaml_file_relative_path), 'w') as yaml_file:
+        with open(os.path.join(target_entity_type_dir, yaml_file_relative_path), 'w') as yaml_file:
             yaml.dump(entry, yaml_file, allow_unicode=True, default_flow_style=False, indent=2, width=120)
 
     return 0
