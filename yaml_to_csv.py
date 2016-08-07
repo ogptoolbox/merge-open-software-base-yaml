@@ -5,7 +5,7 @@
 # By: Emmanuel Raviart <emmanuel.raviart@data.gouv.fr>
 #
 # Copyright (C) 2015, 2016 Etalab
-# https::#git.framasoft.org/etalab/merge-open-software-base-yaml
+# https://git.framasoft.org/etalab/merge-open-software-base-yaml
 #
 # merge-open-software-base-yaml is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
