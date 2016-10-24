@@ -26,6 +26,7 @@ import collections
 import functools
 import logging
 import os
+import shutil
 import sys
 
 import apt_pkg
@@ -82,7 +83,7 @@ def extract_from_name_id(value):
         if isinstance(name, str):
             yield 'en', name
         else:
-            yield from name.items()
+            yield from extract_from_value_by_language(name)
 
 
 def extract_from_name_id_list(value):
@@ -103,6 +104,17 @@ def extract_from_singletion_or_list(language, value):
 def extract_from_value(language, value):
     if value is not None:
         yield language, value
+
+
+def extract_from_value_by_language(value):
+    if value is not None:
+        yield from value.items()
+
+
+def extract_from_wikidata(value):
+    if value is not None:
+        for item in value:
+            yield item.get('xml:lang'), item['value']
 
 
 def get_path(item, path):
@@ -158,7 +170,15 @@ def main():
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING, stream=sys.stdout)
 
-    if not os.path.exists(args.target_dir):
+    assert os.path.exists(args.source_dir)
+    if os.path.exists(args.target_dir):
+        for filename in os.listdir(args.target_dir):
+            if filename.startswith('.'):
+                continue
+            path = os.path.join(args.target_dir, filename)
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+    else:
         os.makedirs(args.target_dir)
 
     # ACTORS
@@ -222,7 +242,7 @@ def main():
             value = get_path(entry, path)
             for language, item in extractor(value):
                 assert isinstance(item, str), (path, language, item, value)
-                if item is not None:
+                if language is not None and item is not None:
                     item = item.strip()
                     if item:
                         sources_by_value_by_language.setdefault(language, {}).setdefault(item, set()).add(source)
@@ -316,7 +336,7 @@ def main():
             value = get_path(entry, path)
             for language, item in extractor(value):
                 assert isinstance(item, str), (path, language, item, value)
-                if item is not None:
+                if language is not None and item is not None:
                     item = item.strip()
                     if item:
                         sources_by_value_by_language.setdefault(language, {}).setdefault(item, set()).add(source)
@@ -339,7 +359,7 @@ def main():
             value = get_path(entry, path)
             for language, item in extractor(value):
                 assert isinstance(item, str), (path, language, item, value)
-                if item is not None:
+                if language in (None, 'en') and item is not None:
                     item = item.strip()
                     if item:
                         sources_by_value.setdefault(item, set()).add(source)
@@ -386,7 +406,7 @@ def main():
         # bugTracker
         # URL of the service where bugs related to the tool can be reported
         for path in (
-                'wikidata.bug_tracker.0.value',
+                'wikidata.bug_tracking_system.0.value',
                 'ogptoolbox-framacalc.URL suivi de bogues',
                 ):
             value = get_path(entry, path)
@@ -402,7 +422,7 @@ def main():
         # license
         # Name of the license governing the tool.
         for path in (
-                'wikidata.license_enlabel.0.value',
+                'wikidata.license_label.0.value',
                 'civicstack.license.name.en',
                 'nuit-debout.Nom de la licence',
                 'ogptoolbox-framacalc.Licence',
@@ -422,7 +442,7 @@ def main():
         # the file name for the tool.
         for path in (
                 'debian_appstream.Name.C',
-                'wikidata.program_enlabel.0.value',
+                'wikidata.label.0.value',
                 'civic-tech-field-guide.name',
                 'civicstack.name',
                 'tech-plateforms.Name',
@@ -444,35 +464,31 @@ def main():
         # longDescription
         # Description of the tool, for each supported language, in a map indexed by the two letter (ISO-639-1) language
         # code
-        for language, paths in dict(
-                en = (
-                    'debian.description.en.long_description',
-                    'civicstack.description.en',
-                    'tech-plateforms.About',
-                    'participatedb.Description',
-                    'harnessing-collaborative-technologies.description',
-                    ),
-                es = (
-                    'debian.description.es.long_description',
-                    'civicstack.description.es',
-                    ),
-                fr = (
-                    'debian.description.fr.long_description',
-                    'civicstack.description.fr',
-                    'nuit-debout.Détails',
-                    'ogptoolbox-framacalc.Description',
-                    ),
-                ).items():
-            for path in paths:
-                value = get_path(entry, path)
-                if value is not None:
-                    value = value.strip()
-                    if value:
-                        canonical.setdefault('longDescription', {})[language] = dict(
-                            source = get_path_source(path),
-                            value = value,
-                            )
-                        break
+        for path, extractor in (
+                ('wikidata.description', extract_from_wikidata),
+                ('debian.description.en.long_description', functools.partial(extract_from_value, 'en')),
+                ('debian.description.es.long_description', functools.partial(extract_from_value, 'es')),
+                ('debian.description.fr.long_description', functools.partial(extract_from_value, 'fr')),
+                ('civicstack.description', extract_from_value_by_language),
+                ('tech-plateforms.About', functools.partial(extract_from_value, 'en')),
+                ('participatedb.Description', functools.partial(extract_from_value, 'en')),
+                ('harnessing-collaborative-technologies.description', functools.partial(extract_from_value, 'en')),
+                ('nuit-debout.Détails', functools.partial(extract_from_value, 'fr')),
+                ('ogptoolbox-framacalc.Description', functools.partial(extract_from_value, 'fr')),
+                ):
+            source = get_path_source(path)
+            value = get_path(entry, path)
+            for language, item in extractor(value):
+                assert isinstance(item, str), (path, language, item, value)
+                if language is not None and item is not None:
+                    item = item.strip()
+                    if item:
+                        canonical_value_by_language = canonical.setdefault('longDescription', {})
+                        if language not in canonical_value_by_language:
+                            canonical_value_by_language[language] = dict(
+                                source = source,
+                                value = item,
+                                )
 
         # programmingLanguages
         sources_by_value = {}
@@ -483,7 +499,7 @@ def main():
             value = get_path(entry, path)
             for language, item in extractor(value):
                 assert isinstance(item, str), (path, language, item, value)
-                if item is not None:
+                if language in (None, 'en') and item is not None:
                     item = item.strip()
                     if item:
                         sources_by_value.setdefault(item, set()).add(source)
@@ -517,7 +533,7 @@ def main():
         # sourceCode
         # URL from which the source code of the tool can be obtained.
         for path in (
-                'wikidata.source_code.0.value',
+                'wikidata.source_code_repository.0.value',
                 'civicstack.github',
                 'nuit-debout.Lien vers le code',
                 'ogptoolbox-framacalc.URL code source',
@@ -535,7 +551,7 @@ def main():
         # stackexchangeTag:
         # Tag from http://stackexchange.org/ uniquely associated with the tool.
         for path in (
-                'wikidata.stackexchange_tag.0.value',
+                'wikidata.stack_exchange_tag.0.value',
                 'ogptoolbox-framacalc.Tag stack exchange',
                 ):
             value = get_path(entry, path)
@@ -555,6 +571,7 @@ def main():
                 # ('civicstack.category', extract_from_name_id),
                 ('civicstack.tags', extract_from_name_id_list),
                 ('debian_appstream.Categories', functools.partial(extract_from_list, 'en')),
+                ('harnessing-collaborative-technologies.category', functools.partial(extract_from_value, 'en')),
                 ('nuit-debout.Fonction', functools.partial(extract_from_value, 'fr')),
                 ('ogptoolbox-framacalc.Catégorie', functools.partial(extract_from_value, 'fr')),
                 ('participatedb.Category', functools.partial(extract_from_singletion_or_list, 'en')),
@@ -564,13 +581,14 @@ def main():
                 ('tech-plateforms.AppCivist Service 1', functools.partial(extract_from_value, 'en')),
                 ('tech-plateforms.AppCivist Service 2', functools.partial(extract_from_value, 'en')),
                 ('tech-plateforms.AppCivist Service 3', functools.partial(extract_from_value, 'en')),
-                ('harnessing-collaborative-technologies.category', functools.partial(extract_from_value, 'en')),
+                ('wikidata.genre_label', extract_from_wikidata),
+                ('wikidata.instance_of_label', extract_from_wikidata),
                 ):
             source = get_path_source(path)
             value = get_path(entry, path)
             for language, item in extractor(value):
                 assert isinstance(item, str), (path, language, item, value)
-                if item is not None:
+                if language is not None and item is not None:
                     item = item.strip()
                     if item:
                         sources_by_value_by_language.setdefault(language, {}).setdefault(item, set()).add(source)
