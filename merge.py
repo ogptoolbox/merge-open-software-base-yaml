@@ -25,6 +25,7 @@ import argparse
 import collections
 import logging
 import os
+import shutil
 import sys
 
 import apt_pkg
@@ -315,7 +316,14 @@ def main():
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING, stream=sys.stdout)
 
     assert os.path.exists(args.source_dir)
-    if not os.path.exists(args.target_dir):
+    if os.path.exists(args.target_dir):
+        for filename in os.listdir(args.target_dir):
+            if filename.startswith('.'):
+                continue
+            path = os.path.join(args.target_dir, filename)
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+    else:
         os.makedirs(args.target_dir)
 
     canonical_name_by_name_by_source = {}
