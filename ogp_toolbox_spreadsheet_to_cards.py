@@ -83,6 +83,11 @@ def main():
                 # TODO: Rate it with -1 instead of ignoring it.
                 continue
             entry = entry_by_name.setdefault(name, collections.OrderedDict())
+            # First add sheet_name as card type.
+            values = entry.setdefault('Card Type', [])
+            if sheet_name not in values:
+                values.append(sheet_name)
+            # Add cells to card.
             for label, value in zip(labels, row):
                 if slugify(label) == 'delete':
                     continue
