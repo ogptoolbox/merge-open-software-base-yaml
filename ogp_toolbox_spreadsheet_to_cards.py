@@ -40,7 +40,73 @@ from slugify import slugify
 
 
 app_name = os.path.splitext(os.path.basename(__file__))[0]
+csv_url_template = 'https://docs.google.com/spreadsheets/d/{id}/export?format=csv&id={id}&gid={gid}'
 log = logging.getLogger(app_name)
+schemas = {
+    'By': dict(
+        type = 'array',
+        items = dict(
+            type = 'string',
+            format = 'uriref',
+            ),
+        ),
+    'Developer': dict(
+        type = 'array',
+        items = dict(
+            type = 'string',
+            format = 'uriref',
+            ),
+        ),
+    'InteroperableWith': dict(
+        type = 'array',
+        items = dict(
+            type = 'string',
+            format = 'uriref',
+            ),
+        ),
+    'Partner': dict(
+        type = 'array',
+        items = dict(
+            type = 'string',
+            format = 'uriref',
+            ),
+        ),
+    'Provider': dict(
+        type = 'array',
+        items = dict(
+            type = 'string',
+            format = 'uriref',
+            ),
+        ),
+    'Software': dict(
+        type = 'array',
+        items = dict(
+            type = 'string',
+            format = 'uriref',
+            ),
+        ),
+    'Tool': dict(
+        type = 'array',
+        items = dict(
+            type = 'string',
+            format = 'uriref',
+            ),
+        ),
+    'UsedBy': dict(
+        type = 'array',
+        items = dict(
+            type = 'string',
+            format = 'uriref',
+            ),
+        ),
+    'Uses': dict(
+        type = 'array',
+        items = dict(
+            type = 'string',
+            format = 'uriref',
+            ),
+        ),
+    }
 spreadsheet_id = '1Sjp9PG75Ap-5YBvOWZ-cCUGkNhN41LZlz3OL-gJ-tKU'
 sheet_id_by_name = {
     "Software": '1702131855',
@@ -48,7 +114,7 @@ sheet_id_by_name = {
     "Usage": '1374288343',
     "Organization": '475734092',
     }
-csv_url_template = 'https://docs.google.com/spreadsheets/d/{id}/export?format=csv&id={id}&gid={gid}'
+widgets = {}
 
 
 def main():
@@ -100,6 +166,8 @@ def main():
     body = dict(
         key = 'Name',
         cards = list(entry_by_name.values()),
+        schemas = schemas,
+        widgets = widgets,
         )
     # print(json.dumps(body, ensure_ascii = False, indent = 2))
     request = urllib.request.Request(
@@ -114,11 +182,16 @@ def main():
     try:
         response = urllib.request.urlopen(request)
     except urllib.error.HTTPError as e:
-        print('Error response {}:\n{}'.format(e.code, e.read().decode('utf-8')))
+        error_body = e.read().decode('utf-8')
+        try:
+            error_json = json.loads(error_body)
+        except UnicodeDecodeError:
+            print('Error response {}:\n{}'.format(e.code, error_body))
+        else:
+            print('Error response {}:\n{}'.format(e.code, json.dumps(error_json, ensure_ascii = False, indent = 2)))
         raise
     data = json.loads(response.read().decode('utf-8'))
-    print(data)
-
+    print(json.dumps(data, ensure_ascii = False, indent = 2))
     return 0
 
 
