@@ -158,6 +158,8 @@ def main():
                 if slugify(label) == 'delete':
                     continue
                 value = value.strip()
+                if value.endswith(('[initiative]', '[service]')):
+                    value = value.rsplit(None, 1)[0].rstrip()
                 if value and not value.startswith('-'):
                     values = entry.setdefault(label, [])
                     if value not in values:
