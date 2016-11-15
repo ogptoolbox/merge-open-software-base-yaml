@@ -179,7 +179,7 @@ def main():
             'Content-Type': 'application/json',
             'Retruco-API-Key': args.api_key,
             },
-        url = urllib.parse.urljoin(args.api_url, '/cards-bundle'),
+        url = urllib.parse.urljoin(args.api_url, '/cards/bundle'),
         )
     try:
         response = urllib.request.urlopen(request)
@@ -187,7 +187,7 @@ def main():
         error_body = e.read().decode('utf-8')
         try:
             error_json = json.loads(error_body)
-        except UnicodeDecodeError:
+        except json.JSONDecodeError:
             print('Error response {}:\n{}'.format(e.code, error_body))
         else:
             print('Error response {}:\n{}'.format(e.code, json.dumps(error_json, ensure_ascii = False, indent = 2)))
