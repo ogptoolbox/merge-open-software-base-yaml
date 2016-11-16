@@ -44,77 +44,65 @@ csv_url_template = 'https://docs.google.com/spreadsheets/d/{id}/export?format=cs
 log = logging.getLogger(app_name)
 schemas = {
     'By': dict(
+        # Final Use.By -> Organization.Final Use
         type = 'array',
-        items = dict(
-            type = 'string',
-            format = 'uriref',
-            ),
+        items = {'$ref': '/schemas/bijective-uri-reference'},
         ),
     'Developer': dict(
+        # Software.Developer -> Organization.Developer of
         type = 'array',
-        items = dict(
-            type = 'string',
-            format = 'uriref',
-            ),
-        ),
-    'InteroperableWith': dict(
-        type = 'array',
-        items = dict(
-            type = 'string',
-            format = 'uriref',
-            ),
+        items = {'$ref': '/schemas/bijective-uri-reference'},
         ),
     'Partner': dict(
+        # Final Use.Partner -> Organization.Partner for
+        # Platform.Partner -> Organization.Partner for
         type = 'array',
-        items = dict(
-            type = 'string',
-            format = 'uriref',
-            ),
+        items = {'$ref': '/schemas/bijective-uri-reference'},
         ),
     'Provider': dict(
+        # Platform.Provider -> Organization.Provider of
         type = 'array',
-        items = dict(
-            type = 'string',
-            format = 'uriref',
-            ),
+        items = {'$ref': '/schemas/bijective-uri-reference'},
         ),
     'Software': dict(
+        # Platform.Software -> Software.Used by
         type = 'array',
-        items = dict(
-            type = 'string',
-            format = 'uriref',
-            ),
+        items = {'$ref': '/schemas/bijective-uri-reference'},
         ),
     'Tool': dict(
+        # Final Use.Tool -> Software.Used by
+        # Final Use.Tool -> Platform.Used by
         type = 'array',
-        items = dict(
-            type = 'string',
-            format = 'uriref',
-            ),
+        items = {'$ref': '/schemas/bijective-uri-reference'},
         ),
-    'UsedBy': dict(
+    'Used by': dict(
+        # Software.Used by -> Platform.Software
         type = 'array',
-        items = dict(
-            type = 'string',
-            format = 'uriref',
-            ),
+        items = {'$ref': '/schemas/bijective-uri-reference'},
         ),
     'Uses': dict(
+        # Software.Uses -> Software.Used by
         type = 'array',
-        items = dict(
-            type = 'string',
-            format = 'uriref',
-            ),
+        items = {'$ref': '/schemas/bijective-uri-reference'},
         ),
     }
 spreadsheet_id = '1Sjp9PG75Ap-5YBvOWZ-cCUGkNhN41LZlz3OL-gJ-tKU'
 sheet_id_by_name = {
     "Software": '1702131855',
     "Platform": '2066765238',
-    "Usage": '1374288343',
+    "Final Use": '1374288343',
     "Organization": '475734092',
     }
-widgets = {}
+widgets = {
+    'By': dict(tag = 'RatedItemOrSet'),
+    'Developer': dict(tag = 'RatedItemOrSet'),
+    'Partner': dict(tag = 'RatedItemOrSet'),
+    'Provider': dict(tag = 'RatedItemOrSet'),
+    'Software': dict(tag = 'RatedItemOrSet'),
+    'Tool': dict(tag = 'RatedItemOrSet'),
+    'Used by': dict(tag = 'RatedItemOrSet'),
+    'Uses': dict(tag = 'RatedItemOrSet'),
+    }
 
 
 def main():
@@ -158,12 +146,70 @@ def main():
                 if slugify(label) == 'delete':
                     continue
                 value = value.strip()
-                if value.endswith(('[initiative]', '[service]')):
+                if value.endswith(('[initiative]', '[service]', '[software]')):
                     value = value.rsplit(None, 1)[0].rstrip()
                 if value and not value.startswith('-'):
                     values = entry.setdefault(label, [])
                     if value not in values:
                         values.append(value)
+
+    for name, entry in entry_by_name.items():
+        card_types = entry['Card Type']
+        for label, schema in schemas.items():
+            values = entry.get(label)
+            if values is None:
+                continue
+            if schema['type'] == 'array' and schema['items']['$ref'] == '/schemas/bijective-uri-reference':
+                if label == 'By':
+                    # Final Use.By -> Organization.Final Use
+                    entry[label] = [
+                        dict(reverseName = 'Final Use', targetId = value)
+                        for value in values
+                        ]
+                elif label == 'Developer':
+                    # Software.Developer -> Organization.Developer of
+                    entry[label] = [
+                        dict(reverseName = 'Developer of', targetId = value)
+                        for value in values
+                        ]
+                elif label == 'Partner':
+                    # Final Use.Partner -> Organization.Partner for
+                    # Platform.Partner -> Organization.Partner for
+                    entry[label] = [
+                        dict(reverseName = 'Partner for', targetId = value)
+                        for value in values
+                        ]
+                elif label == 'Provider':
+                    # Platform.Provider -> Organization.Provider of
+                    entry[label] = [
+                        dict(reverseName = 'Provider of', targetId = value)
+                        for value in values
+                        ]
+                elif label == 'Software':
+                    # Platform.Software -> Software.Used by
+                    entry[label] = [
+                        dict(reverseName = 'Used by', targetId = value)
+                        for value in values
+                        ]
+                elif label == 'Tool':
+                    # Final Use.Tool -> Software.Used by
+                    # Final Use.Tool -> Platform.Used by
+                    entry[label] = [
+                        dict(reverseName = 'Used by', targetId = value)
+                        for value in values
+                        ]
+                elif label == 'Used by':
+                    # Software.Used by -> Platform.Software
+                    entry[label] = [
+                        dict(reverseName = 'Software', targetId = value)
+                        for value in values
+                        ]
+                elif label == 'Uses':
+                    # Software.Uses -> Software.Used by
+                    entry[label] = [
+                        dict(reverseName = 'Used by', targetId = value)
+                        for value in values
+                        ]
 
     body = dict(
         key = 'Name',
