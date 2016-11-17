@@ -34,12 +34,13 @@ import logging
 import os
 import sys
 import urllib.parse
-import urllib.request
 
+import requests
 from slugify import slugify
 
 
 app_name = os.path.splitext(os.path.basename(__file__))[0]
+args = None
 csv_url_template = 'https://docs.google.com/spreadsheets/d/{id}/export?format=csv&id={id}&gid={gid}'
 log = logging.getLogger(app_name)
 schemas = {
@@ -53,6 +54,13 @@ schemas = {
         type = 'array',
         items = {'$ref': '/schemas/bijective-uri-reference'},
         ),
+    'Logo': dict(
+        type = 'array',
+        items = dict(
+            type = 'string',
+            format = 'uri',
+            ),
+        ),
     'Partner': dict(
         # Final Use.Partner -> Organization.Partner for
         # Platform.Partner -> Organization.Partner for
@@ -63,6 +71,13 @@ schemas = {
         # Platform.Provider -> Organization.Provider of
         type = 'array',
         items = {'$ref': '/schemas/bijective-uri-reference'},
+        ),
+    'Screenshot': dict(
+        type = 'array',
+        items = dict(
+            type = 'string',
+            format = 'uri',
+            ),
         ),
     'Software': dict(
         # Platform.Software -> Software.Used by
@@ -96,8 +111,10 @@ sheet_id_by_name = {
 widgets = {
     'By': dict(tag = 'RatedItemOrSet'),
     'Developer': dict(tag = 'RatedItemOrSet'),
+    'Logo': dict(tag = 'Image'),
     'Partner': dict(tag = 'RatedItemOrSet'),
     'Provider': dict(tag = 'RatedItemOrSet'),
+    'Screenshot': dict(tag = 'Image'),
     'Software': dict(tag = 'RatedItemOrSet'),
     'Tool': dict(tag = 'RatedItemOrSet'),
     'Used by': dict(tag = 'RatedItemOrSet'),
@@ -110,17 +127,21 @@ def main():
     parser.add_argument('api_url', help='base URL of API server')
     parser.add_argument('-k', '--api-key', required = True, help = 'Server API key')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='increase output verbosity')
+    global args
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING, stream=sys.stdout)
 
     entry_by_name = {}
     for sheet_name, sheet_id in sorted(sheet_id_by_name.items()):
-        response = urllib.request.urlopen(csv_url_template.format(
-            gid = sheet_id,
-            id = spreadsheet_id,
-            ))
-        csv_reader = csv.reader(codecs.iterdecode(response, 'utf-8'))
+        response = requests.get(
+            csv_url_template.format(
+                gid = sheet_id,
+                id = spreadsheet_id,
+                ),
+            )
+        response.raise_for_status()
+        csv_reader = csv.reader(response.content.decode('utf-8').splitlines())
         labels = [
             label.strip()
             for label in next(csv_reader)
@@ -159,7 +180,7 @@ def main():
             values = entry.get(label)
             if values is None:
                 continue
-            if schema['type'] == 'array' and schema['items']['$ref'] == '/schemas/bijective-uri-reference':
+            if schema['type'] == 'array' and schema['items'].get('$ref') == '/schemas/bijective-uri-reference':
                 if label == 'By':
                     # Final Use.By -> Organization.Final Use
                     entry[label] = [
@@ -210,6 +231,22 @@ def main():
                         dict(reverseName = 'Used by', targetId = value)
                         for value in values
                         ]
+            elif schema['type'] == 'array' and schema['items'].get('type') == 'string' \
+                    and schema['items'].get('format') == 'uri':
+                widget = widgets.get(label)
+                if widget['tag'] == 'Image':
+                    uploaded_images_url = [
+                        image_url
+                        for image_url in (
+                            upload_image(value)
+                            for value in values
+                            )
+                        if image_url is not None
+                        ]
+                    if uploaded_images_url:
+                        entry[label] = uploaded_images_url
+                    else:
+                        del entry[label]
 
     body = dict(
         key = 'Name',
@@ -218,29 +255,53 @@ def main():
         widgets = widgets,
         )
     # print(json.dumps(body, ensure_ascii = False, indent = 2))
-    request = urllib.request.Request(
-        data = json.dumps(body, ensure_ascii = False, indent = 2).encode('utf-8'),
+    response = requests.post(urllib.parse.urljoin(args.api_url, '/cards/bundle'),
         headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
             'Retruco-API-Key': args.api_key,
             },
-        url = urllib.parse.urljoin(args.api_url, '/cards/bundle'),
+        json = body,
         )
-    try:
-        response = urllib.request.urlopen(request)
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode('utf-8')
+    if response.status_code != requests.codes.ok:
+        error_body = response.content.decode('utf-8')
         try:
             error_json = json.loads(error_body)
         except json.JSONDecodeError:
-            print('Error response {}:\n{}'.format(e.code, error_body))
+            print('Error response {}:\n{}'.format(response.status_code, error_body))
         else:
-            print('Error response {}:\n{}'.format(e.code, json.dumps(error_json, ensure_ascii = False, indent = 2)))
-        raise
-    data = json.loads(response.read().decode('utf-8'))
+            print('Error response {}:\n{}'.format(response.status_code, json.dumps(error_json, ensure_ascii = False, indent = 2)))
+        response.raise_for_status()
+
+    data = response.json()
     print(json.dumps(data, ensure_ascii = False, indent = 2))
     return 0
+
+
+def upload_image(url):
+    if not url.startswith(('http://', 'https://')):
+        log.warning('Ignoring invalid image URL: {}'.format(url))
+        return None
+    response = requests.get(url,
+        headers = {
+            'Accept': 'Accept:image/png,image/;q=0.8,/*;q=0.5',  # Firefox
+            },
+        )
+    response.raise_for_status()
+    image = response.content
+    response = requests.post(urllib.parse.urljoin(args.api_url, '/uploads/images'),
+        files = dict(file = image),
+        headers = {
+            'Accept': 'application/json',
+            'Retruco-API-Key': args.api_key,
+            },
+        )
+    if response.status_code != 201:
+        log.warning('Ignoring invalid image at URL: {}'.format(url))
+    response.raise_for_status()
+    data = response.json()['data']
+    log.info('Uploaded image "{}" to "{}"'.format(url, data['path']))
+    return data['path']
 
 
 if __name__ == "__main__":
