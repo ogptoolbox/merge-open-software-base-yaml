@@ -18,6 +18,14 @@ git clone https://git.framasoft.org/codegouv/merge-open-software-base-yaml.git
 cd merge-open-software-base-yaml
 ```
 
+### Step 0: Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+> Use `--user` option if relevant, or work in a [virtual env](https://github.com/berdario/pew).
+
 ### Step 1: merge YAML files
 
 ```bash
