@@ -42,6 +42,7 @@ from slugify import slugify
 app_name = os.path.splitext(os.path.basename(__file__))[0]
 args = None
 csv_url_template = 'https://docs.google.com/spreadsheets/d/{id}/export?format=csv&id={id}&gid={gid}'
+image_path_by_url = {}
 log = logging.getLogger(app_name)
 schemas = {
     'By': dict(
@@ -125,12 +126,20 @@ widgets = {
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('api_url', help='base URL of API server')
-    parser.add_argument('-k', '--api-key', required = True, help = 'Server API key')
+    parser.add_argument('-k', '--api-key', required = True, help = 'server API key')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='increase output verbosity')
     global args
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING, stream=sys.stdout)
+
+    if not os.path.exists('cache'):
+        os.mkdir('cache')
+    cached_images_path = os.path.join('cache', 'images.json')
+    if os.path.exists(cached_images_path):
+        with open(cached_images_path) as cached_images_file:
+            cached_images = json.load(cached_images_file)
+        image_path_by_url.update(cached_images)
 
     entry_by_name = {}
     for sheet_name, sheet_id in sorted(sheet_id_by_name.items()):
@@ -175,7 +184,6 @@ def main():
                         values.append(value)
 
     for name, entry in entry_by_name.items():
-        card_types = entry['Card Type']
         for label, schema in schemas.items():
             values = entry.get(label)
             if values is None:
@@ -248,6 +256,9 @@ def main():
                     else:
                         del entry[label]
 
+    with open(cached_images_path, 'w') as cached_images_file:
+        cached_images = json.dump(image_path_by_url, cached_images_file, ensure_ascii = False, indent = 2)
+
     body = dict(
         key = 'Name',
         cards = list(entry_by_name.values()),
@@ -282,11 +293,19 @@ def upload_image(url):
     if not url.startswith(('http://', 'https://')):
         log.warning('Ignoring invalid image URL: {}'.format(url))
         return None
+    path = image_path_by_url.get(url, KeyError)
+    if path is not KeyError:
+        return path
+
     response = requests.get(url,
         headers = {
             'Accept': 'Accept:image/png,image/;q=0.8,/*;q=0.5',  # Firefox
             },
         )
+    if response.status_code == 404:
+        log.warning('Image not found at URL: {}'.format(url))
+        image_path_by_url[url] = None
+        return None
     response.raise_for_status()
     image = response.content
     response = requests.post(urllib.parse.urljoin(args.api_url, '/uploads/images'),
@@ -301,7 +320,9 @@ def upload_image(url):
     response.raise_for_status()
     data = response.json()['data']
     log.info('Uploaded image "{}" to "{}"'.format(url, data['path']))
-    return data['path']
+    path = data['path']
+    image_path_by_url[url] = path
+    return path
 
 
 if __name__ == "__main__":
