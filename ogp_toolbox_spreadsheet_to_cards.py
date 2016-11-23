@@ -317,6 +317,8 @@ def upload_image(url):
         )
     if response.status_code != 201:
         log.warning('Ignoring invalid image at URL: {}'.format(url))
+    if not response.ok:
+        log.error('Image upload failed for {}:\n{}'.format(url, response.text))
     response.raise_for_status()
     data = response.json()['data']
     log.info('Uploaded image "{}" to "{}"'.format(url, data['path']))
