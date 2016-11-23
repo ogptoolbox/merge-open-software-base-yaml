@@ -152,7 +152,7 @@ def main():
         response.raise_for_status()
         csv_reader = csv.reader(response.content.decode('utf-8').splitlines())
         labels = [
-            label.strip()
+            repair_label(label)
             for label in next(csv_reader)
             ]
         name_index = labels.index("Name")
@@ -168,7 +168,7 @@ def main():
                 continue
             entry = entry_by_name.setdefault(name, collections.OrderedDict())
             # First add sheet_name as card type.
-            values = entry.setdefault('Card Type', [])
+            values = entry.setdefault('Types', [])
             if sheet_name not in values:
                 values.append(sheet_name)
             # Add cells to card.
@@ -192,51 +192,51 @@ def main():
                 if label == 'By':
                     # Final Use.By -> Organization.Final Use
                     entry[label] = [
-                        dict(reverseName = 'Final Use', targetId = value)
+                        dict(reverseKeyId = 'Final Use', targetId = value)
                         for value in values
                         ]
                 elif label == 'Developer':
                     # Software.Developer -> Organization.Developer of
                     entry[label] = [
-                        dict(reverseName = 'Developer of', targetId = value)
+                        dict(reverseKeyId = 'Developer of', targetId = value)
                         for value in values
                         ]
                 elif label == 'Partner':
                     # Final Use.Partner -> Organization.Partner for
                     # Platform.Partner -> Organization.Partner for
                     entry[label] = [
-                        dict(reverseName = 'Partner for', targetId = value)
+                        dict(reverseKeyId = 'Partner for', targetId = value)
                         for value in values
                         ]
                 elif label == 'Provider':
                     # Platform.Provider -> Organization.Provider of
                     entry[label] = [
-                        dict(reverseName = 'Provider of', targetId = value)
+                        dict(reverseKeyId = 'Provider of', targetId = value)
                         for value in values
                         ]
                 elif label == 'Software':
                     # Platform.Software -> Software.Used by
                     entry[label] = [
-                        dict(reverseName = 'Used by', targetId = value)
+                        dict(reverseKeyId = 'Used by', targetId = value)
                         for value in values
                         ]
                 elif label == 'Tool':
                     # Final Use.Tool -> Software.Used by
                     # Final Use.Tool -> Platform.Used by
                     entry[label] = [
-                        dict(reverseName = 'Used by', targetId = value)
+                        dict(reverseKeyId = 'Used by', targetId = value)
                         for value in values
                         ]
                 elif label == 'Used by':
                     # Software.Used by -> Platform.Software
                     entry[label] = [
-                        dict(reverseName = 'Software', targetId = value)
+                        dict(reverseKeyId = 'Software', targetId = value)
                         for value in values
                         ]
                 elif label == 'Uses':
                     # Software.Uses -> Software.Used by
                     entry[label] = [
-                        dict(reverseName = 'Used by', targetId = value)
+                        dict(reverseKeyId = 'Used by', targetId = value)
                         for value in values
                         ]
             elif schema['type'] == 'array' and schema['items'].get('type') == 'string' \
@@ -262,6 +262,7 @@ def main():
     body = dict(
         key = 'Name',
         cards = list(entry_by_name.values()),
+        language = 'en',  # Language used by default by the cards (for example, for the keys of their attributes)
         schemas = schemas,
         widgets = widgets,
         )
@@ -287,6 +288,13 @@ def main():
     data = response.json()
     print(json.dumps(data, ensure_ascii = False, indent = 2))
     return 0
+
+
+def repair_label(label):
+    label = label.strip()
+    return {
+        "Tag": "Tags",
+        }.get(label, label)
 
 
 def upload_image(url):
