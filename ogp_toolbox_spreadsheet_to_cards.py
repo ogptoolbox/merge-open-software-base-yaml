@@ -50,6 +50,10 @@ schemas = {
         type = 'array',
         items = {'$ref': '/schemas/bijective-uri-reference'},
         ),
+    'Description': dict(
+        type = 'array',
+        items = {'$ref': '/schemas/localized-string'},
+        ),
     'Developer': dict(
         # Software.Developer -> Organization.Developer of
         type = 'array',
@@ -111,6 +115,10 @@ sheet_id_by_name = {
     }
 widgets = {
     'By': dict(tag = 'RatedItemOrSet'),
+    'Description': dict(
+        tag = 'input',
+        type = 'text',
+        ),
     'Developer': dict(tag = 'RatedItemOrSet'),
     'Logo': dict(tag = 'Image'),
     'Partner': dict(tag = 'RatedItemOrSet'),
@@ -167,21 +175,50 @@ def main():
                 # TODO: Rate it with -1 instead of ignoring it.
                 continue
             entry = entry_by_name.setdefault(name, collections.OrderedDict())
+
             # First add sheet_name as card type.
             values = entry.setdefault('Types', [])
             if sheet_name not in values:
                 values.append(sheet_name)
+
+            # Merge descriptions in different languages.
+            record = collections.OrderedDict(zip(labels, row))
+            description_by_language = dict(
+                (filtered_key, filtered_localization)
+                for filtered_key, filtered_localization in (
+                    (key, localization.strip())
+                    for key, localization in (
+                        (language, record.pop(label, None))
+                        for label, language in (
+                            ('Description-EN', 'en'),
+                            ('Description-FR', 'fr'),
+                            )
+                        )
+                    if localization is not None
+                    )
+                if filtered_localization and not filtered_localization.startswith('-')
+                )
+            if description_by_language:
+                assert not record.get('Description')
+                record['Description'] = description_by_language
+            elif record.get('Description'):
+                record['Description'] = dict(en = record['Description'])
+
             # Add cells to card.
-            for label, value in zip(labels, row):
+            for label, value in record.items():
                 if slugify(label) == 'delete':
                     continue
-                value = value.strip()
-                if value.endswith(('[initiative]', '[service]', '[software]')):
-                    value = value.rsplit(None, 1)[0].rstrip()
-                if value and not value.startswith('-'):
-                    values = entry.setdefault(label, [])
-                    if value not in values:
-                        values.append(value)
+                if isinstance(value, str):
+                    value = value.strip()
+                    if value.endswith(('[initiative]', '[service]', '[software]')):
+                        value = value.rsplit(None, 1)[0].rstrip()
+                    if value.startswith('-'):
+                        continue
+                if not value:
+                    continue
+                values = entry.setdefault(label, [])
+                if value not in values:
+                    values.append(value)
 
     for name, entry in entry_by_name.items():
         for label, schema in schemas.items():
