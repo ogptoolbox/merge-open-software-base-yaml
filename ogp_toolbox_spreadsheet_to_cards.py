@@ -116,8 +116,7 @@ sheet_id_by_name = {
 widgets = {
     'By': dict(tag = 'RatedItemOrSet'),
     'Description': dict(
-        tag = 'input',
-        type = 'text',
+        tag = 'textarea',
         ),
     'Developer': dict(tag = 'RatedItemOrSet'),
     'Logo': dict(tag = 'Image'),
