@@ -181,30 +181,31 @@ def main():
                 values.append(sheet_name)
 
             # Merge descriptions in different languages.
-            record = collections.OrderedDict(zip(labels, row))
-            description_by_language = dict(
-                (filtered_key, filtered_localization)
-                for filtered_key, filtered_localization in (
-                    (key, localization.strip())
-                    for key, localization in (
-                        (language, record.pop(label, None))
-                        for label, language in (
-                            ('Description-EN', 'en'),
-                            ('Description-FR', 'fr'),
-                            )
-                        )
-                    if localization is not None
-                    )
-                if filtered_localization and not filtered_localization.startswith('-')
-                )
+            description_by_language = {}
+            for label, language in (
+                    ('Description-EN', 'en'),
+                    ('Description-FR', 'fr'),
+                    ):
+                if label in labels:
+                    index = labels.index(label)
+                    localization = (row[index] or '').strip()
+                    if localization.startswith('-'):
+                        continue
+                    description_by_language[language] = localization
+
+            clean_labels = []
+            clean_row = []
+            for label, value in zip(labels, row):
+                if label in ('Description-EN', 'Description-FR'):
+                    continue
+                clean_labels.append(label)
+                clean_row.append(value)
             if description_by_language:
-                assert not record.get('Description')
-                record['Description'] = description_by_language
-            elif record.get('Description'):
-                record['Description'] = dict(en = record['Description'])
+                clean_labels.append('Description')
+                clean_row.append(description_by_language)
 
             # Add cells to card.
-            for label, value in record.items():
+            for label, value in zip(clean_labels, clean_row):
                 if slugify(label) == 'delete':
                     continue
                 if isinstance(value, str):
