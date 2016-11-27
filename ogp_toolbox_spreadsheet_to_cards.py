@@ -331,6 +331,7 @@ def repair_label(label):
     label = label.strip()
     return {
         "Tag": "Tags",
+        "Tag-Usage": "Tags",
         }.get(label, label)
 
 
