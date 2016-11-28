@@ -336,24 +336,32 @@ def repair_label(label):
 
 
 def upload_image(url):
-    if not url.startswith(('http://', 'https://')):
+    if not url.startswith(('http://', 'https://')) and not os.path.exists(os.path.join('images', url)):
         log.warning('Ignoring invalid image URL: {}'.format(url))
         return None
-    path = image_path_by_url.get(url, KeyError)
-    if path is not KeyError:
-        return path
+    if os.path.exists(os.path.join('images', url)):
+        with open(os.path.join('images', url), 'rb') as image:
+            return upload_image2(url, image)
+    else:
+        path = image_path_by_url.get(url, KeyError)
+        if path is not KeyError:
+            return path
 
-    response = requests.get(url,
-        headers = {
-            'Accept': 'Accept:image/png,image/;q=0.8,/*;q=0.5',  # Firefox
-            },
-        )
-    if response.status_code == 404:
-        log.warning('Image not found at URL: {}'.format(url))
-        image_path_by_url[url] = None
-        return None
-    response.raise_for_status()
-    image = response.content
+        response = requests.get(url,
+            headers = {
+                'Accept': 'Accept:image/png,image/;q=0.8,/*;q=0.5',  # Firefox
+                },
+            )
+        if response.status_code == 404:
+            log.warning('Image not found at URL: {}'.format(url))
+            image_path_by_url[url] = None
+            return None
+        response.raise_for_status()
+        image = response.content
+        return upload_image2(url, image)
+
+
+def upload_image2(url, image):
     response = requests.post(urllib.parse.urljoin(args.api_url, '/uploads/images'),
         files = dict(file = image),
         headers = {
