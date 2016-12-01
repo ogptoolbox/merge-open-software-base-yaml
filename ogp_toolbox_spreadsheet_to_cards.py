@@ -45,75 +45,30 @@ csv_url_template = 'https://docs.google.com/spreadsheets/d/{id}/export?format=cs
 image_path_by_url = {}
 log = logging.getLogger(app_name)
 schemas = {
-    'By': dict(
+    'By': 'schema:bijective-card-references-array',
         # Final Use.By -> Organization.Final Use
-        type = 'array',
-        items = {'$ref': '/schemas/bijective-card-reference'},
-        ),
-    'Description': dict(
-        type = 'array',
-        items = {'$ref': '/schemas/localized-string'},
-        ),
-    'Developer': dict(
+    'Description': 'schema:localized-strings-array',
+    'Developer': 'schema:bijective-card-references-array',
         # Software.Developer -> Organization.Developer of
-        type = 'array',
-        items = {'$ref': '/schemas/bijective-card-reference'},
-        ),
-    'Logo': dict(
-        type = 'array',
-        items = dict(
-            type = 'string',
-            format = 'uri',
-            ),
-        ),
-    'Partner': dict(
+    'Logo': 'schema:uris-array',
+    'Partner': 'schema:bijective-card-references-array',
         # Final Use.Partner -> Organization.Partner for
         # Platform.Partner -> Organization.Partner for
-        type = 'array',
-        items = {'$ref': '/schemas/bijective-card-reference'},
-        ),
-    'Provider': dict(
+    'Provider': 'schema:bijective-card-references-array',
         # Platform.Provider -> Organization.Provider of
-        type = 'array',
-        items = {'$ref': '/schemas/bijective-card-reference'},
-        ),
-    'Screenshot': dict(
-        type = 'array',
-        items = dict(
-            type = 'string',
-            format = 'uri',
-            ),
-        ),
-    'Software': dict(
+    'Screenshot': 'schema:uris-array',
+    'Software': 'schema:bijective-card-references-array',
         # Platform.Software -> Software.Used by
-        type = 'array',
-        items = {'$ref': '/schemas/bijective-card-reference'},
-        ),
-    'Tool': dict(
+    'Tool': 'schema:bijective-card-references-array',
         # Final Use.Tool -> Software.Used by
         # Final Use.Tool -> Platform.Used by
-        type = 'array',
-        items = {'$ref': '/schemas/bijective-card-reference'},
-        ),
-    'Software': dict(
+    'Software': 'schema:bijective-card-references-array',
         # Platform.Software -> Software.Used by
-        type = 'array',
-        items = {'$ref': '/schemas/bijective-card-reference'},
-        ),
-    'Types': dict(
-        type = 'array',
-        items = {'$ref': '/schemas/type-reference'},
-        ),
-    'Used by': dict(
+    'Types': 'schema:type-references-array',
+    'Used by': 'schema:bijective-card-references-array',
         # Software.Used by -> Platform.Software
-        type = 'array',
-        items = {'$ref': '/schemas/bijective-card-reference'},
-        ),
-    'Uses': dict(
+    'Uses': 'schema:bijective-card-references-array',
         # Software.Uses -> Software.Used by
-        type = 'array',
-        items = {'$ref': '/schemas/bijective-card-reference'},
-        ),
     }
 spreadsheet_id = '1Sjp9PG75Ap-5YBvOWZ-cCUGkNhN41LZlz3OL-gJ-tKU'
 sheet_id_by_name = {
@@ -241,7 +196,7 @@ def main():
             values = entry.get(label)
             if values is None:
                 continue
-            if schema['type'] == 'array' and schema['items'].get('$ref') == '/schemas/bijective-card-reference':
+            if schema == 'schema:bijective-card-references-array':
                 if label == 'By':
                     # Final Use.By -> Organization.Final Use
                     entry[label] = [
@@ -292,8 +247,7 @@ def main():
                         dict(reverseKeyId = 'Used by', targetId = value)
                         for value in values
                         ]
-            elif schema['type'] == 'array' and schema['items'].get('type') == 'string' \
-                    and schema['items'].get('format') == 'uri':
+            elif schema == 'schema:uris-array':
                 widget = widgets.get(label)
                 if widget['tag'] == 'Image':
                     uploaded_images_url = [
