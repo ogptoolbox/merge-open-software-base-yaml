@@ -48,7 +48,7 @@ schemas = {
     'By': dict(
         # Final Use.By -> Organization.Final Use
         type = 'array',
-        items = {'$ref': '/schemas/bijective-uri-reference'},
+        items = {'$ref': '/schemas/bijective-card-reference'},
         ),
     'Description': dict(
         type = 'array',
@@ -57,7 +57,7 @@ schemas = {
     'Developer': dict(
         # Software.Developer -> Organization.Developer of
         type = 'array',
-        items = {'$ref': '/schemas/bijective-uri-reference'},
+        items = {'$ref': '/schemas/bijective-card-reference'},
         ),
     'Logo': dict(
         type = 'array',
@@ -70,12 +70,12 @@ schemas = {
         # Final Use.Partner -> Organization.Partner for
         # Platform.Partner -> Organization.Partner for
         type = 'array',
-        items = {'$ref': '/schemas/bijective-uri-reference'},
+        items = {'$ref': '/schemas/bijective-card-reference'},
         ),
     'Provider': dict(
         # Platform.Provider -> Organization.Provider of
         type = 'array',
-        items = {'$ref': '/schemas/bijective-uri-reference'},
+        items = {'$ref': '/schemas/bijective-card-reference'},
         ),
     'Screenshot': dict(
         type = 'array',
@@ -87,23 +87,32 @@ schemas = {
     'Software': dict(
         # Platform.Software -> Software.Used by
         type = 'array',
-        items = {'$ref': '/schemas/bijective-uri-reference'},
+        items = {'$ref': '/schemas/bijective-card-reference'},
         ),
     'Tool': dict(
         # Final Use.Tool -> Software.Used by
         # Final Use.Tool -> Platform.Used by
         type = 'array',
-        items = {'$ref': '/schemas/bijective-uri-reference'},
+        items = {'$ref': '/schemas/bijective-card-reference'},
+        ),
+    'Software': dict(
+        # Platform.Software -> Software.Used by
+        type = 'array',
+        items = {'$ref': '/schemas/bijective-card-reference'},
+        ),
+    'Types': dict(
+        type = 'array',
+        items = {'$ref': '/schemas/type-reference'},
         ),
     'Used by': dict(
         # Software.Used by -> Platform.Software
         type = 'array',
-        items = {'$ref': '/schemas/bijective-uri-reference'},
+        items = {'$ref': '/schemas/bijective-card-reference'},
         ),
     'Uses': dict(
         # Software.Uses -> Software.Used by
         type = 'array',
-        items = {'$ref': '/schemas/bijective-uri-reference'},
+        items = {'$ref': '/schemas/bijective-card-reference'},
         ),
     }
 spreadsheet_id = '1Sjp9PG75Ap-5YBvOWZ-cCUGkNhN41LZlz3OL-gJ-tKU'
@@ -112,6 +121,12 @@ sheet_id_by_name = {
     "Platform": '2066765238',
     "Final Use": '1374288343',
     "Organization": '475734092',
+    }
+type_symbol_by_sheet_name = {
+    "Software": 'type:software',
+    "Platform": 'type:platform',
+    "Final Use": 'type:use-case',
+    "Organization": 'type:organization',
     }
 widgets = {
     'By': dict(tag = 'RatedItemOrSet'),
@@ -177,8 +192,9 @@ def main():
 
             # First add sheet_name as card type.
             values = entry.setdefault('Types', [])
-            if sheet_name not in values:
-                values.append(sheet_name)
+            type_symbol = type_symbol_by_sheet_name[sheet_name]
+            if type_symbol not in values:
+                values.append(type_symbol)
 
             # Merge descriptions in different languages.
             description_by_language = {}
@@ -225,7 +241,7 @@ def main():
             values = entry.get(label)
             if values is None:
                 continue
-            if schema['type'] == 'array' and schema['items'].get('$ref') == '/schemas/bijective-uri-reference':
+            if schema['type'] == 'array' and schema['items'].get('$ref') == '/schemas/bijective-card-reference':
                 if label == 'By':
                     # Final Use.By -> Organization.Final Use
                     entry[label] = [
