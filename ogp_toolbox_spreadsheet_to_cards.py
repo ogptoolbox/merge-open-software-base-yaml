@@ -180,16 +180,25 @@ def main():
                 if slugify(label) == 'delete':
                     continue
                 if isinstance(value, str):
-                    value = value.strip()
-                    if value.endswith(('[initiative]', '[service]', '[software]')):
-                        value = value.rsplit(None, 1)[0].rstrip()
-                    if value.startswith('-'):
+                    if value.lstrip().startswith('-'):
                         continue
-                if not value:
-                    continue
-                values = entry.setdefault(label, [])
-                if value not in values:
-                    values.append(value)
+                    fragments = value.split(',') if label == 'Location' else [value]
+                    for fragment in fragments:
+                        fragment = fragment.strip()
+                        if fragment.endswith(('[initiative]', '[service]', '[software]',
+                                '(initiative)', '(service)', '(software)')):
+                            fragment = fragment.rsplit(None, 1)[0].rstrip()
+                        if not fragment:
+                            continue
+                        values = entry.setdefault(label, [])
+                        if fragment not in values:
+                            values.append(fragment)
+                else:
+                    if not value:
+                        continue
+                    values = entry.setdefault(label, [])
+                    if value not in values:
+                        values.append(value)
 
     for name, entry in entry_by_name.items():
         for label, schema in schemas.items():
