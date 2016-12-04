@@ -352,6 +352,10 @@ def upload_image2(url, image):
         log.warning('Ignoring invalid image at URL: {}'.format(url))
     if not response.ok:
         log.error('Image upload failed for {}:\n{}'.format(url, response.text))
+        if response.status_code == 400:
+            image_path_by_url[url] = None
+            return None
+
     response.raise_for_status()
     data = response.json()['data']
     log.info('Uploaded image "{}" to "{}"'.format(url, data['path']))
