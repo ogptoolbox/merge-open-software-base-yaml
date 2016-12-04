@@ -64,7 +64,7 @@ schemas = {
         # Final Use.Tool -> Platform.Used by
     'Software': 'schema:bijective-card-references-array',
         # Platform.Software -> Software.Used by
-    'Types': 'schema:type-references-array',
+    'Types': 'schema:value-ids-array',
     'Used by': 'schema:bijective-card-references-array',
         # Software.Used by -> Platform.Software
     'Uses': 'schema:bijective-card-references-array',
@@ -78,10 +78,10 @@ sheet_id_by_name = {
     "Organization": '475734092',
     }
 type_symbol_by_sheet_name = {
-    "Software": 'type:software',
-    "Platform": 'type:platform',
-    "Final Use": 'type:use-case',
-    "Organization": 'type:organization',
+    "Software": 'software',
+    "Platform": 'platform',
+    "Final Use": 'use-case',
+    "Organization": 'organization',
     }
 widgets = {
     'By': dict(tag = 'RatedItemOrSet'),
