@@ -327,13 +327,15 @@ def upload_image(url):
     if not url.startswith(('http://', 'https://')) and not os.path.exists(os.path.join('images', url)):
         log.warning('Ignoring invalid image URL: {}'.format(url))
         return None
+
+    path = image_path_by_url.get(url, KeyError)
+    if path is not KeyError:
+        return path
+
     if os.path.exists(os.path.join('images', url)):
         with open(os.path.join('images', url), 'rb') as image:
             return upload_image2(url, image)
     else:
-        path = image_path_by_url.get(url, KeyError)
-        if path is not KeyError:
-            return path
 
         try:
             response = requests.get(url,
