@@ -326,11 +326,20 @@ def upload_image(url):
         if path is not KeyError:
             return path
 
-        response = requests.get(url,
-            headers = {
-                'Accept': 'Accept:image/png,image/;q=0.8,/*;q=0.5',  # Firefox
-                },
-            )
+        try:
+            response = requests.get(url,
+                headers = {
+                    'Accept': 'Accept:image/png,image/;q=0.8,/*;q=0.5',  # Firefox
+                    },
+                )
+        except requests.exceptions.SSLError:
+            log.exception('SSL error when retrieving image at URL: {}'.format(url))
+            image_path_by_url[url] = None
+            return None
+        if response.status_code == 403:
+            log.warning('Image access forbidden at URL: {}'.format(url))
+            image_path_by_url[url] = None
+            return None
         if response.status_code == 404:
             log.warning('Image not found at URL: {}'.format(url))
             image_path_by_url[url] = None
