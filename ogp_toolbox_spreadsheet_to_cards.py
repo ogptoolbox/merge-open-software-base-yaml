@@ -70,13 +70,13 @@ schemas = {
     'Uses': 'schema:bijective-card-references-array',
         # Software.Uses -> Software.Used by
     }
-spreadsheet_id = '1Sjp9PG75Ap-5YBvOWZ-cCUGkNhN41LZlz3OL-gJ-tKU'
 sheet_id_by_name = {
     "Software": '1702131855',
     "Platform": '2066765238',
     "Final Use": '1374288343',
     "Organization": '475734092',
     }
+spreadsheet_id = '1Sjp9PG75Ap-5YBvOWZ-cCUGkNhN41LZlz3OL-gJ-tKU'
 type_symbol_by_sheet_name = {
     "Software": 'software',
     "Platform": 'platform',
@@ -120,14 +120,23 @@ def main():
 
     entry_by_name = {}
     for sheet_name, sheet_id in sorted(sheet_id_by_name.items()):
-        response = requests.get(
-            csv_url_template.format(
-                gid = sheet_id,
-                id = spreadsheet_id,
-                ),
-            )
-        response.raise_for_status()
-        csv_reader = csv.reader(response.content.decode('utf-8').splitlines())
+        cached_csv_path = os.path.join('cache', '{}.csv'.format(type_symbol_by_sheet_name[sheet_name]))
+        if os.path.exists(cached_csv_path):
+            log.info("Using cache for {}.".format(type_symbol_by_sheet_name[sheet_name]))
+            with open(cached_csv_path, encoding = 'utf-8') as cached_csv_file:
+                csv_content = cached_csv_file.read()
+        else:
+            response = requests.get(
+                csv_url_template.format(
+                    gid = sheet_id,
+                    id = spreadsheet_id,
+                    ),
+                )
+            response.raise_for_status()
+            csv_content = response.content.decode('utf-8')
+            with open(cached_csv_path, 'w', encoding = 'utf-8') as cached_csv_file:
+                cached_csv_file.write(csv_content)
+        csv_reader = csv.reader(csv_content.splitlines())
         labels = [
             repair_label(label)
             for label in next(csv_reader)
